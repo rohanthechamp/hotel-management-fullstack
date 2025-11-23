@@ -9,9 +9,12 @@ import Modal from "../../ui/Modal";
 import { formatCurrency } from "../../utils/helpers";
 import { formatDistanceFromNow } from "../../utils/helpers";
 import Menus from "../../ui/Menus";
-import { HiArrowDownOnSquare, HiEye } from "react-icons/hi2";
-
+import { HiArrowDownOnSquare, HiEye, HiTrash } from "react-icons/hi2";
+import { FaSpinner } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import Spinner from "../../ui/Spinner";
+import { useDeleteBookings } from "./useDeleteBookings";
+import Button from "../../ui/Button";
 
 const Cabin = styled.div`
   font-size: 1.6rem;
@@ -47,6 +50,11 @@ const NumberOfGuests = styled.div`
 `;
 
 function BookingRow({ booking }) {
+  const navigate = useNavigate();
+  const { onDelete, isDeleting, error } = useDeleteBookings();
+
+  if (!booking || error) return <Spinner />;
+
   const {
     id: bookingId,
     created_at,
@@ -65,7 +73,9 @@ function BookingRow({ booking }) {
     "checked-out": "silver",
   };
 
-  const navigate = useNavigate();
+  function handleDeleteBooking(id) {
+    onDelete({ id });
+  }
 
   return (
     <Table.Row>
@@ -111,6 +121,26 @@ function BookingRow({ booking }) {
 
           {/* // Page */}
           <Menus.List cabinId={bookingId}>
+            <button
+
+              onClick={() => {
+                if (confirm("Delete this booking? This action cannot be undone.")) {
+                  handleDeleteBooking(bookingId);
+                }
+              }}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <p>
+                  Processing <FaSpinner />
+                </p>
+              ) : (
+                <p>
+                  Delete <HiTrash />
+                </p>
+              )}
+            </button>
+
             <Menus.Button
               icon={<HiEye />}
               onClick={() => navigate(`/bookings/${bookingId}`)}

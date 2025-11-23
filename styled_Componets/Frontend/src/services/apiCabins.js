@@ -2,6 +2,7 @@ import supabase, { supabaseUrl } from "./supabase";
 
 // supabase
 export const getCabins = async () => {
+
     let { data, error } = await supabase.from("cabins").select("*");
     if (error) {
         console.error(error);
@@ -11,7 +12,6 @@ export const getCabins = async () => {
 
     return data;
 };
-
 
 
 export const deleteCabins = async (id, msg = '') => {
