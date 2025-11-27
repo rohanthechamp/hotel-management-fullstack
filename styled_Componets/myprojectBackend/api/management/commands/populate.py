@@ -1,3 +1,4 @@
+# management/commands/populate.py
 import random
 from decimal import Decimal
 from datetime import date, timedelta
@@ -5,147 +6,131 @@ from datetime import date, timedelta
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.contrib.auth import get_user_model
+from faker import Faker
 
-from api.models import (
-    Cabins,
-    Guests,
-    Bookings,
-    Settings,
-)  
+from api.models import Cabins, Guests, Bookings, Settings
+
+from decimal import Decimal, ROUND_HALF_UP
+fake = Faker()
 
 def random_date_within(days_back=365):
-    """Return a random date within the past `days_back` days (including today)."""
     days = random.randint(0, days_back)
     return date.today() - timedelta(days=days)
 
-
 class Command(BaseCommand):
-    help = "Populate demo data for Cabins, Guests, Bookings and Settings."
+    help = "Populate demo data efficiently (chunked bulk_create)."
 
     def add_arguments(self, parser):
-        parser.add_argument(
-            "--cabins",
-            type=int,
-            default=5,
-            help="Number of cabins to create (default=5)",
-        )
-        parser.add_argument(
-            "--guests",
-            type=int,
-            default=20,
-            help="Number of guests to create (default=20)",
-        )
-        parser.add_argument(
-            "--bookings",
-            type=int,
-            default=10,
-            help="Number of bookings to create (default=10)",
-        )
+        parser.add_argument("--cabins", type=int, default=5000)
+        parser.add_argument("--guests", type=int, default=10000)
+        parser.add_argument("--bookings", type=int, default=20000)
+        parser.add_argument("--chunk", type=int, default=5000,
+                            help="Chunk size for bulk_create (default 5000)")
 
     @transaction.atomic
     def handle(self, *args, **options):
         User = get_user_model()
-
         cabin_count = options["cabins"]
         guest_count = options["guests"]
         booking_count = options["bookings"]
+        chunk_size = options["chunk"]
 
-        # Create or get demo user
         demo_user, created = User.objects.get_or_create(
             username="demo_user", defaults={"email": "demo@example.com"}
         )
         if created:
             demo_user.set_password("demo12345")
             demo_user.save()
-            self.stdout.write(self.style.SUCCESS("Created demo user: demo_user"))
+            self.stdout.write(self.style.SUCCESS("Created demo user"))
 
-        # 1) Create Settings (single row)
+        # Settings
         Settings.objects.all().delete()
-        s = Settings.objects.create(
+        Settings.objects.create(
             created_at=date.today(),
             minBookingLength=1,
             maxBookingLength=7,
             minGuestsPerBooking=1,
             breakfastPrice=Decimal("5.00"),
         )
-        self.stdout.write(self.style.SUCCESS("Created Settings row"))
+        self.stdout.write(self.style.SUCCESS("Settings created"))
 
-        # 2) Create Guests
+        # Guests (chunked)
         Guests.objects.all().delete()
         guest_objs = []
+        next_national_id = 1_000_000_000
+        created_guests = 0
         for i in range(guest_count):
             g = Guests(
                 created_at=random_date_within(180),
-                fullName=f"Guest {i+1} Demo",
-                email=f"guest{i+1}_demo@example.com",
-                nationalID=1000000000 + i,
-                nationality=random.choice(["India", "USA", "UK", "Spain", "Brazil"]),
-                # countryFlag left blank (ImageField optional)
+                fullName=fake.name(),
+                email=fake.unique.email(),
+                nationalID=next_national_id + i,
+                nationality=fake.country(),
             )
             guest_objs.append(g)
-        Guests.objects.bulk_create(guest_objs)
-        guests = list(Guests.objects.all())
-        self.stdout.write(self.style.SUCCESS(f"Created {len(guests)} Guests"))
+            if len(guest_objs) >= chunk_size:
+                Guests.objects.bulk_create(guest_objs)
+                created_guests += len(guest_objs)
+                guest_objs = []
+                self.stdout.write(f"Created {created_guests} guests so far...")
+        if guest_objs:
+            Guests.objects.bulk_create(guest_objs)
+            created_guests += len(guest_objs)
+        guests_ids = list(Guests.objects.values_list("id", flat=True))
+        self.stdout.write(self.style.SUCCESS(f"Total guests created: {created_guests}"))
 
-        # 3) Create Cabins
+        # Cabins (chunked)
         Cabins.objects.all().delete()
         cabin_objs = []
+        created_cabins = 0
         for i in range(cabin_count):
-            # maxCapacity: your validators allow 1..2 (based on the model you shared).
+            # adjust capacity to your model's validator (1..2). change if needed.
             max_capacity = random.choice([1, 2])
             regular_price = Decimal(str(round(random.uniform(50.0, 500.0), 2)))
-            discount = (
-                Decimal(str(round(random.uniform(0, 50), 2)))
-                if random.random() < 0.5
-                else None
-            )
-
+            discount = Decimal(str(random.uniform(6, 18))).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
             c = Cabins(
                 user=demo_user,
                 created_at=random_date_within(300),
-                name=f"Demo Cabin {i+1}",
+                name=f"Demo Cabin {i+1} {fake.word()}",
                 maxCapacity=max_capacity,
                 regularPrice=regular_price,
                 discount=discount,
-                observations="Demo cabin for testing",
-                # image left blank
+                observations=fake.sentence(nb_words=6),
             )
             cabin_objs.append(c)
-        Cabins.objects.bulk_create(cabin_objs)
-        cabins = list(Cabins.objects.all())
-        self.stdout.write(self.style.SUCCESS(f"Created {len(cabins)} Cabins"))
+            if len(cabin_objs) >= chunk_size:
+                Cabins.objects.bulk_create(cabin_objs)
+                created_cabins += len(cabin_objs)
+                cabin_objs = []
+                self.stdout.write(f"Created {created_cabins} cabins so far...")
+        if cabin_objs:
+            Cabins.objects.bulk_create(cabin_objs)
+            created_cabins += len(cabin_objs)
+        cabin_ids = list(Cabins.objects.values_list("id", flat=True))
+        self.stdout.write(self.style.SUCCESS(f"Total cabins created: {created_cabins}"))
 
-        # 4) Create Bookings
+        # Bookings (chunked) — reference by IDs for speed
         Bookings.objects.all().delete()
         booking_objs = []
-        # Because cabin is OneToOne with booking, only create up to number of cabins
-        bookings_to_create = min(booking_count, len(cabins))
-        # used_cabin_indices = set()
-        for i in range(bookings_to_create):
-            # # pick an unused cabin (because OneToOne) *
-            # available_indices = [
-            #     idx for idx in range(len(cabins)) if idx not in used_cabin_indices
-            # ]
-            # available_indices=random.choices(cabins)
-            # if not available_indices:
-            #     break
-            # ci = random.choice(available_indices)
-            # used_cabin_indices.add(ci)
-            # cabin = cabins[random.choice(cabins)]
-            cabin = random.choice(cabins)
+        created_bookings = 0
+        for i in range(booking_count):
+            # random pick IDs (no full object load)
+            cabin_id = random.choice(cabin_ids)
+            guest_id = random.choice(guests_ids)
 
-            num_nights = random.randint(1, 7)  # within validators
-            num_guests = random.randint(
-                1, min(4, cabin.maxCapacity)
-            )  # within validators and capacity
-            cabin_price = cabin.regularPrice
-            extras_price = (
-                Decimal(str(round(random.uniform(0, 100), 2)))
-                if random.random() < 0.5
-                else Decimal("0.00")
-            )
+            # fetch cabin price quickly (one db hit per chunk could be done instead; for simplicity below, we read cabin.regularPrice using cached dict)
+            # To avoid many DB hits, build a small cache of cabin_id->price:
+            # We'll build the cache on first use
+            if i == 0:
+                cabin_price_map = dict(Cabins.objects.in_bulk(cabin_ids))
+                # convert model instances to price map
+                cabin_price_map = {k: v.regularPrice for k, v in cabin_price_map.items()}
+
+            num_nights = random.randint(1, 7)
+            num_guests = random.randint(1, min(4, 2))  # adjust according to your model's maxCapacity
+            cabin_price = cabin_price_map.get(cabin_id, Decimal("100.00"))
+            extras_price = Decimal(str(round(random.uniform(0, 100), 2))) if random.random() < 0.4 else Decimal("0.00")
             total_price = (Decimal(num_nights) * cabin_price) + extras_price
-
             start = date.today() + timedelta(days=random.randint(0, 30))
             end = start + timedelta(days=num_nights)
 
@@ -161,14 +146,20 @@ class Command(BaseCommand):
                 totalPrice=total_price,
                 status=random.choice([True, False]),
                 isPaid=random.choice([True, False]),
-                observations="Demo booking autogenerated",
-                cabin=cabin,
-                guest=random.choice(guests),
+                observations=fake.sentence(nb_words=8),
+                cabin_id=cabin_id,
+                guest_id=guest_id,
             )
             booking_objs.append(b)
 
-        # Bulk create bookings
-        Bookings.objects.bulk_create(booking_objs)
-        self.stdout.write(self.style.SUCCESS(f"Created {len(booking_objs)} Bookings"))
+            if len(booking_objs) >= chunk_size:
+                Bookings.objects.bulk_create(booking_objs)
+                created_bookings += len(booking_objs)
+                booking_objs = []
+                self.stdout.write(f"Created {created_bookings} bookings so far...")
+        if booking_objs:
+            Bookings.objects.bulk_create(booking_objs)
+            created_bookings += len(booking_objs)
 
-        self.stdout.write(self.style.SUCCESS("Demo data population complete."))
+        self.stdout.write(self.style.SUCCESS(f"Total bookings created: {created_bookings}"))
+        self.stdout.write(self.style.SUCCESS("Demo population complete."))

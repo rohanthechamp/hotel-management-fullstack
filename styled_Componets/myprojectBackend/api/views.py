@@ -1,6 +1,16 @@
-from rest_framework import generics
+from ast import Dict
+from warnings import filters
+from flask import request
+from rest_framework import generics, filters
+import rest_framework
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
+from django_filters.rest_framework import DjangoFilterBackend
+from stripe import Product
+
+from api.filters import CabinsFilter, PaidBookings, RecentPaidBookings
+from api.pagination import CustomPagination
 
 from .models import Cabins, Guests, Bookings, Settings
 from .serializers import (
@@ -14,8 +24,9 @@ from django.core.cache import cache
 from django.http import JsonResponse
 from rest_framework.views import APIView
 
+
 # ----------------------------------------------------------
-# 📌 CABINS
+# *📌 CABINS
 # ----------------------------------------------------------
 
 
@@ -25,12 +36,42 @@ class CabinCreateListView(generics.ListCreateAPIView):
     POST /cabins/    -> Create a cabin (admin only)
     """
 
-    queryset = Cabins.objects.all()
     serializer_class = CabinSerializer
+    filterset_class = CabinsFilter
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    search_fields = ["=name", "maxCapacity", "regularPrice"]
+    ordering_fields = ["name", "maxCapacity", "regularPrice"]
+    ordering = ["id"]  # &default ordering when the data loads
+    pagination_class = CustomPagination
+
+    def get_queryset(self):
+        queryset = Cabins.objects.all()
+
+        # * Filtering
+       
+        discount = self.request.query_params.get("discount")
+
+
+        if discount == "no-discount":
+            queryset = queryset.filter(discount__lt=1)
+
+        if discount == "with-discount":
+            queryset = queryset.filter(discount__gte=1)
+
+
+        return queryset
 
     def get_permissions(self):
         """Allow public GET, admin-only POST."""
-        return [IsAdminUser()] if self.request.method == "POST" else [AllowAny()]
+        return (
+            [IsAdminUser()]
+            if self.request.method in [ "PUT", "PATCH", "DELETE"] # needs POST
+            else [AllowAny()]
+        )
 
 
 class SingleCabinRetrieveView(generics.RetrieveUpdateDestroyAPIView):
@@ -46,11 +87,15 @@ class SingleCabinRetrieveView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_permissions(self):
         """Public read, admin-only update/delete."""
-        return [IsAdminUser()] if self.request.method != "GET" else [AllowAny()]
+        return (
+            [AllowAny()]
+            if self.request.method in ["GET", "DELETE"]
+            else [IsAdminUser()]
+        )
 
 
 # ----------------------------------------------------------
-# 👤 GUESTS
+# *👤 GUESTS
 # ----------------------------------------------------------
 
 
@@ -62,6 +107,15 @@ class GuestsCreateListView(generics.ListCreateAPIView):
 
     queryset = Guests.objects.all()
     serializer_class = GuestSerializer
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    search_fields = ["=fullName", "nationality"]
+    ordering_fields = ["created_at"]
+    ordering = ["id"]
+    # pagination_class=PageNumberPagination
 
     def get_permissions(self):
         """Allow public GET, admin-only POST."""
@@ -85,7 +139,7 @@ class SingleGuestRetrieveView(generics.RetrieveUpdateDestroyAPIView):
 
 
 # ----------------------------------------------------------
-# 📄 BOOKINGS
+# *📄 BOOKINGS
 # ----------------------------------------------------------
 
 
@@ -97,6 +151,11 @@ class BookingsCreateListView(generics.ListCreateAPIView):
 
     queryset = Bookings.objects.prefetch_related("cabin", "guest").all()
     serializer_class = BookingWriteSerializer
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter, PaidBookings]
+    ordering_fields = ["created_at", "numGuests", "cabinPrice"]
+    ordering = ["id"]
+
+    pagination_class = CustomPagination
 
     def get_permissions(self):
         """Allow public GET, admin-only POST."""
@@ -120,7 +179,7 @@ class SingleBookingRetrieveView(generics.RetrieveUpdateDestroyAPIView):
 
 
 # ----------------------------------------------------------
-# ⚙️ SETTINGS
+# *⚙️ SETTINGS
 # ----------------------------------------------------------
 
 
@@ -170,7 +229,8 @@ class SingleSettingsView(generics.RetrieveUpdateDestroyAPIView):
 
 class HomeView(APIView):
 
-    permission_classes = (IsAuthenticated,)
+    # permission_classes = (IsAuthenticated,)
+    permission_classes = (AllowAny,)
 
     def get(self, request):
         BookingsCount = cache.get_or_set(
@@ -182,3 +242,6 @@ class HomeView(APIView):
         serializer = MessageSerializer(data)
 
         return Response(serializer.data)
+
+    def get_queryset(self):
+        return super().get_queryset()

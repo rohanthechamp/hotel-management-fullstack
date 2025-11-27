@@ -66,7 +66,7 @@ class CabinSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Cabins
-        fields = "__all__"
+        fields = ("user","created_at","name","maxCapacity","regularPrice","discount","observations","image")
 
     def validate_regularPrice(self, value):
         """Make sure regular price is non-negative and reasonable."""
