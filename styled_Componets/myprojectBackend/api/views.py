@@ -7,7 +7,8 @@ from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from django_filters.rest_framework import DjangoFilterBackend
-from stripe import Product
+
+# from stripe import Product/
 
 from api.filters import CabinsFilter, PaidBookings, RecentPaidBookings
 from api.pagination import CustomPagination
@@ -52,9 +53,7 @@ class CabinCreateListView(generics.ListCreateAPIView):
         queryset = Cabins.objects.all()
 
         # * Filtering
-       
         discount = self.request.query_params.get("discount")
-
 
         if discount == "no-discount":
             queryset = queryset.filter(discount__lt=1)
@@ -62,14 +61,13 @@ class CabinCreateListView(generics.ListCreateAPIView):
         if discount == "with-discount":
             queryset = queryset.filter(discount__gte=1)
 
-
         return queryset
 
     def get_permissions(self):
         """Allow public GET, admin-only POST."""
         return (
             [IsAdminUser()]
-            if self.request.method in [ "PUT", "PATCH", "DELETE"] # needs POST
+            if self.request.method in ["PUT", "PATCH", "DELETE"]  # needs POST
             else [AllowAny()]
         )
 
