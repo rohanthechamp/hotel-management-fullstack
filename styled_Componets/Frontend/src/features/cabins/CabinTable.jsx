@@ -6,10 +6,9 @@ import Table from "../../ui/Table";
 import CabinRow from "./CabinRow";
 import { useCabins } from "./useCabins";
 import Menus from "../../ui/Menus";
-import { useSearchParams } from "react-router-dom";
-import { useEffect,useState } from "react";
+
 import { ErrorIcon } from "react-hot-toast";
-import supabase from "../../services/supabase";
+
 
 const TableHeader = styled.header`
   display: grid;
@@ -26,11 +25,11 @@ const TableHeader = styled.header`
 `;
 
 const CabinTable = () => {
-  const { isLoading, Cabins, error } = useCabins();
-  const [searchParams] = useSearchParams();
-  const filterValue = searchParams.get("discount");
-  const sortValue = searchParams.get("sort");
-  console.log(filterValue || sortValue);
+  const { isLoading, cabins, error } = useCabins();
+  // const [searchParams] = useSearchParams();
+  // const filterValue = searchParams.get("discount");
+  // const sortValue = searchParams.get("sort");
+  // console.log(filterValue || sortValue);
   // const [loadingFilter, setLoadingFilter] = useState(false);
   // const [filteredCabins, setFilteredCabins] = useState([]);
 
@@ -72,49 +71,49 @@ const CabinTable = () => {
 
   //
 
-  // * Server Backend Db Approach
-  const [filteredCabins, setFilteredCabins] = useState([]);
-  const [loadingFilter, setLoadingFilter] = useState(false);
+  // // * Server Backend Db Approach
+  // const [filteredCabins, setFilteredCabins] = useState([]);
+  // const [loadingFilter, setLoadingFilter] = useState(false);
 
-  // Function for fetching filtered cabins
-  async function fetchFilterCabins(filterValue) {
-    let query = supabase.from("cabins").select("*");
-    // let query = supabase.from('cabins')
+  // // Function for fetching filtered cabins
+  // async function fetchFilterCabins(filterValue) {
+  //   let query = supabase.from("cabins").select("*");
+  //   // let query = supabase.from('cabins')
 
-    if (filterValue === "with-discount") {
-      query = query.gt("discount", 0);
-    } else if (filterValue === "no-discount") {
-      query = query.or("discount.eq.0,discount.is.null");
-    }
+  //   if (filterValue === "with-discount") {
+  //     query = query.gt("discount", 0);
+  //   } else if (filterValue === "no-discount") {
+  //     query = query.or("discount.eq.0,discount.is.null");
+  //   }
 
-    const { data: cabins, error } = await query;
+  //   const { data: cabins, error } = await query;
 
-    if (error) {
-      console.error(error);
-      throw new Error("Filter Cabins Data could not be loaded");
-    }
+  //   if (error) {
+  //     console.error(error);
+  //     throw new Error("Filter Cabins Data could not be loaded");
+  //   }
 
-    return cabins || [];
-  }
+  //   return cabins || [];
+  // }
 
-  // Effect to re-fetch whenever filterValue changes
-  useEffect(() => {
-    if (filterValue && filterValue !== "all") {
-      setLoadingFilter(true);
-      fetchFilterCabins(filterValue)
-        .then((data) => setFilteredCabins(data))
-        .catch((err) => console.error(err))
-        .finally(() => setLoadingFilter(false));
-    }
-  }, [filterValue]);
+  // // Effect to re-fetch whenever filterValue changes
+  // useEffect(() => {
+  //   if (filterValue && filterValue !== "all") {
+  //     setLoadingFilter(true);
+  //     fetchFilterCabins(filterValue)
+  //       .then((data) => setFilteredCabins(data))
+  //       .catch((err) => console.error(err))
+  //       .finally(() => setLoadingFilter(false));
+  //   }
+  // }, [filterValue]);
 
-  if (isLoading || loadingFilter) return <Spinner />;
+  if (isLoading ) return <Spinner />;
 
   if (error) return <ErrorIcon />;
   if (error) return <p>Error: {error.message}</p>;
 
   // Decide which cabins to show
-  const cabins = filterValue === "all" || !filterValue ? Cabins || [] : filteredCabins;
+  // const cabins = filterValue === "all" || !filterValue ? Cabins || [] : filteredCabins;
 
   return (
     <Menus>

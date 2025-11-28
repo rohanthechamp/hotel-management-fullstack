@@ -1,5 +1,6 @@
 import { PAGE_SIZE } from "../utils/constant";
 import { getToday } from "../utils/helpers";
+import axiosClient from "./axiosClient";
 import supabase from "./supabase";
 
 // import { getToday } from "../utils/helpers";
@@ -169,13 +170,18 @@ export async function updateBooking(id, obj, errorMsg, successMsg) {
   return data;
 }
 
-export async function deleteBooking(id) {
-  // REMEMBER RLS POLICIES
-  const { data, error } = await supabase.from("bookings").delete().eq("id", id);
+// export async function deleteBooking(id) {
+//   // REMEMBER RLS POLICIES
+//   const { data, error } = await supabase.from("bookings").delete().eq("id", id);
 
-  if (error) {
-    console.error(error);
-    throw new Error("Booking could not be deleted");
-  }
-  return data;
+//   if (error) {
+//     console.error(error);
+//     throw new Error("Booking could not be deleted");
+//   }
+//   return data;
+// }
+// DELETE booking
+export async function deleteBooking(id) {
+  const res = await axiosClient.delete(`bookings/${id}/`);
+  return res.data;
 }

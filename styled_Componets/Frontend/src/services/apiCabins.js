@@ -1,32 +1,81 @@
+import axiosClient from "./axiosClient";
 import supabase, { supabaseUrl } from "./supabase";
 
-// supabase
-export const getCabins = async () => {
+// // supabase
+// export const getCabins = async () => {
 
-    let { data, error } = await supabase.from("cabins").select("*");
-    if (error) {
-        console.error(error);
+//     let { data, error } = await supabase.from("cabins").select("*");
+//     if (error) {
+//         console.error(error);
 
-        throw new Error("cabins could not be loaded");
+//         throw new Error("cabins could not be loaded");
+//     }
+
+//     return data;
+// };
+
+// LIST cabins with optional filters
+// export async function getCabins(params = {}) {
+//     const res = await axiosClient.get("cabins/", { params });
+//     return res.data;
+// }
+export const getCabins = async (sortValue, filterValue) => {
+    try {
+        if (sortValue === 'all' && filterValue === 'all') {
+            const { data } = await axiosClient.get(/cabins/); return data?.results || [];
+        }
+        const params = {};
+
+        if (filterValue && filterValue !== "all") {
+            params.discount = filterValue;
+        }
+
+        if (sortValue && sortValue !== "all") {
+            const [field, direction] = sortValue.split("-");
+            const fieldMapping = {
+                name: "name",
+                regularPrice: "regularPrice",
+                maxCapacityCabins: "maxCapacity",
+                minCapacityCabins: "maxCapacity", // if you actually have a minCapacity field, map that instead
+            };
+
+            const mappedField = fieldMapping[field];
+            if (!mappedField) throw new Error("Invalid sorting field from UI");
+
+            params.ordering = direction === "asc" ? mappedField : `-${mappedField}`;
+        }
+
+        const { data } = await axiosClient.get("/cabins/", { params });
+        return data?.results ?? []; // consistent array return
+    } catch (error) {
+        console.error("Error fetching cabins:", error);
+        throw error; // rethrow so react-query sets error state
     }
-
-    return data;
 };
+// SINGLE cabin
+export async function getCabin(id) {
+    const res = await axiosClient.get(`cabins/${id}/`);
+    return res.data;
+}
+// Function for fetching sorted cabins
 
+// export const deleteCabins = async (id, msg = '') => {
+//     if (!id) {
+//         throw new Error("No cabin id provided for deletion");
+//     }
 
-export const deleteCabins = async (id, msg = '') => {
-    if (!id) {
-        throw new Error("No cabin id provided for deletion");
-    }
-
-    const { data, error } = await supabase.from('cabins').delete().eq('id', id);
-    if (error) {
-        console.log(error);
-        throw new Error(msg === '' ? "cabins could not be deleted" : msg);
-    }
-    return data;
-};
-
+//     const { data, error } = await supabase.from('cabins').delete().eq('id', id);
+//     if (error) {
+//         console.log(error);
+//         throw new Error(msg === '' ? "cabins could not be deleted" : msg);
+//     }
+//     return data;
+// };
+// DELETE
+export async function deleteCabin(id) {
+    const res = await axiosClient.delete(`cabins/${id}/`);
+    return res.data;
+}
 
 export const createEditCabins = async (newCabinData, id) => {
     // Defensive checks
