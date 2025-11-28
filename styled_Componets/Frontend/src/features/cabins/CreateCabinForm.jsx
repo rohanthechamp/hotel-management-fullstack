@@ -71,7 +71,19 @@ function CreateCabinForm({ cabinData = {}, resetOpenModel }) {
     const imageToSend = fileSelected ? data.image[0] : otherData.image;
 
     const payload = { ...data, image: imageToSend };
+    const formData = new FormData();
 
+    // Append all fields
+    for (const key in data) {
+      if (key === "image") {
+        // Only append image if file is selected
+        if (data[key] && data[key].length > 0) {
+          formData.append("image", data[key][0]); // File object
+        }
+      } else {
+        formData.append(key, data[key]); // Normal fields
+      }
+    }
     if (isEditId) {
       updateMutate(
         { data: payload, id: EditId },
@@ -83,7 +95,7 @@ function CreateCabinForm({ cabinData = {}, resetOpenModel }) {
         }
       );
     } else {
-      createCabin(payload, {
+      createCabin(formData, {
         onSuccess: () => {
           reset();
           resetOpenModel?.();

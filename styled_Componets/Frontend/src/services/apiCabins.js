@@ -2,27 +2,11 @@ import axiosClient from "./axiosClient";
 import supabase, { supabaseUrl } from "./supabase";
 
 // // supabase
-// export const getCabins = async () => {
 
-//     let { data, error } = await supabase.from("cabins").select("*");
-//     if (error) {
-//         console.error(error);
-
-//         throw new Error("cabins could not be loaded");
-//     }
-
-//     return data;
-// };
-
-// LIST cabins with optional filters
-// export async function getCabins(params = {}) {
-//     const res = await axiosClient.get("cabins/", { params });
-//     return res.data;
-// }
 export const getCabins = async (sortValue, filterValue) => {
     try {
         if (sortValue === 'all' && filterValue === 'all') {
-            const { data } = await axiosClient.get(/cabins/); return data?.results || [];
+            const { data } = await axiosClient.get("/cabins/"); return data?.results || [];
         }
         const params = {};
 
@@ -57,25 +41,8 @@ export async function getCabin(id) {
     const res = await axiosClient.get(`cabins/${id}/`);
     return res.data;
 }
-// Function for fetching sorted cabins
 
-// export const deleteCabins = async (id, msg = '') => {
-//     if (!id) {
-//         throw new Error("No cabin id provided for deletion");
-//     }
 
-//     const { data, error } = await supabase.from('cabins').delete().eq('id', id);
-//     if (error) {
-//         console.log(error);
-//         throw new Error(msg === '' ? "cabins could not be deleted" : msg);
-//     }
-//     return data;
-// };
-// DELETE
-export async function deleteCabin(id) {
-    const res = await axiosClient.delete(`cabins/${id}/`);
-    return res.data;
-}
 
 export const createEditCabins = async (newCabinData, id) => {
     // Defensive checks
@@ -154,4 +121,10 @@ export const createEditCabins = async (newCabinData, id) => {
         throw err;
     }
 };
-
+// const deleteCabins = () => {
+    
+// }
+export async function deleteCabins(id) {
+    const res = await axiosClient.delete(`cabins/${id}/`);
+    return res.data;
+}

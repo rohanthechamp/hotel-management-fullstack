@@ -68,7 +68,7 @@ const CabinRow = ({ cabin }) => {
     });
   }
 
-  console.log({ Modal, Menus, Table, ConfirmDelete });
+  // console.log({ Modal, Menus, Table, ConfirmDelete });
 
   if (isCreating || isDeleting) return <Spinner />;
 
@@ -80,10 +80,10 @@ const CabinRow = ({ cabin }) => {
       <Price role="cell">{formatCurrency(regularPrice)}</Price>
       <Discount role="cell">{formatCurrency(discount)}</Discount>
       <div role="cell">
-        <Img src={image} alt={`Cabin ${name}`} />
+        <Img src={image || 'src/data/img/default-cabin.jpg' } alt={`Cabin ${name}`} />
       </div>
       <Ops role="cell">
-        <Modal>
+        <Modal>``
           <Modal.Open opens="edit-window">
             <button>
               <HiPencil />
