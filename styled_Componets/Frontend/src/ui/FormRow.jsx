@@ -31,17 +31,19 @@ const Label = styled.label`
   font-weight: 500;
 `;
 
-const Error = styled.span`
+const FormError = styled.span`
   font-size: 1.4rem;
   color: var(--color-red-700);
+  margin-top: 4px;
 `;
 
 function FormRow({ label, error, children }) {
+  // console.log(label,error)
   return (
     <StyledFormRow>
       {label && <Label htmlFor={children.props.id}>{label}</Label>}
       {children}
-      {error && <Error>{error}</Error>}
+      {error && <FormError>{error}</FormError>}
     </StyledFormRow>
   );
 }
