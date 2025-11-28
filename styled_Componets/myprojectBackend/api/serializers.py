@@ -3,10 +3,12 @@ from rest_framework import serializers
 from django.core.validators import RegexValidator
 from .models import Cabins, Guests, Bookings, Settings
 from PIL import Image
+from django.contrib.auth.models import User
 
 # -----------------------
 # Reusable validators
 # -----------------------
+
 
 def validate_positive(value):
     """Reusable check: value must be > 0."""
@@ -16,15 +18,16 @@ def validate_positive(value):
 
 def validate_alpha_space(value):
     """Reusable check: only letters and spaces allowed (good for nationality / names)."""
-    alpha_space = RegexValidator(r'^[A-Za-z\s]+$')
+    alpha_space = RegexValidator(r"^[A-Za-z\s]+$")
     try:
         alpha_space(value)
     except Exception:
-        raise serializers.ValidationError("This field may only contain letters and spaces.")
+        raise serializers.ValidationError(
+            "This field may only contain letters and spaces."
+        )
 
 
-
-def validate_image_file( value):
+def validate_image_file(value):
     """
     Production-level image validation for countryFlag field:
     1. Ensures file is actually an image (not just renamed file).
@@ -49,10 +52,31 @@ def validate_image_file( value):
     return value
 
 
+# -----------------------
+# UserRegister Serializer
+# -----------------------
+
+
+class UserRegisterSerializer(serializers.Serializer):
+    username = serializers.CharField(required=True)
+    email = serializers.EmailField(required=True)
+    password = serializers.CharField(write_only=True, min_length=8)
+    passwordConfirm = serializers.CharField(write_only=True, min_length=8)
+
+    def create(self, validated_data):
+        validated_data.pop("passwordConfirm")  # remove field not in model
+        user = User.objects.create_user(
+            username=validated_data["username"],
+            email=validated_data["email"],
+            password=validated_data["password"],
+        )
+        return user
+
 
 # -----------------------
 # Cabin Serializer
 # -----------------------
+
 
 class CabinSerializer(serializers.ModelSerializer):
     """
@@ -62,16 +86,20 @@ class CabinSerializer(serializers.ModelSerializer):
     """
 
     # Example: enforce sane limit for maxCapacity at API layer (model already has validators)
-    maxCapacity = serializers.IntegerField(required=True, validators=[validate_positive])
+    maxCapacity = serializers.IntegerField(
+        required=True, validators=[validate_positive]
+    )
 
     class Meta:
         model = Cabins
-        fields = ("user","created_at","name","maxCapacity","regularPrice","discount","observations","image")
+        fields = "__all__"
 
     def validate_regularPrice(self, value):
         """Make sure regular price is non-negative and reasonable."""
         if value is None or value < 0:
-            raise serializers.ValidationError("Regular price must be zero or a positive number.")
+            raise serializers.ValidationError(
+                "Regular price must be zero or a positive number."
+            )
         return value
 
     def validate_discount(self, value):
@@ -86,18 +114,25 @@ class CabinSerializer(serializers.ModelSerializer):
         - If discount is provided, it should not exceed regularPrice.
         - Keep API-level checks fast and user-friendly; DB-level checks are the final guard.
         """
-        regular = attrs.get("regularPrice") or getattr(self.instance, "regularPrice", None)
+        regular = attrs.get("regularPrice") or getattr(
+            self.instance, "regularPrice", None
+        )
         discount = attrs.get("discount") or getattr(self.instance, "discount", None)
         if discount and regular is not None and discount > regular:
-            raise serializers.ValidationError({"discount": "Discount cannot be greater than regular price."})
+            raise serializers.ValidationError(
+                {"discount": "Discount cannot be greater than regular price."}
+            )
         return attrs
+
     def validate_image(self, value):
         # If file is uploaded, validate size/type
         return validate_image_file(value)
 
+
 # -----------------------
 # Guest Serializer
 # -----------------------
+
 
 class GuestSerializer(serializers.ModelSerializer):
     """
@@ -123,7 +158,9 @@ class GuestSerializer(serializers.ModelSerializer):
     def validate_fullName(self, value):
         # ensure not too short and no accidental whitespace-only names
         if len(value.strip()) < 3:
-            raise serializers.ValidationError("Full name must be at least 3 characters.")
+            raise serializers.ValidationError(
+                "Full name must be at least 3 characters."
+            )
         return value.strip()
 
     def validate_email(self, value):
@@ -147,7 +184,9 @@ class GuestSerializer(serializers.ModelSerializer):
         if self.instance:
             qs = qs.exclude(pk=self.instance.pk)
         if qs.exists():
-            raise serializers.ValidationError("A guest with this national ID already exists.")
+            raise serializers.ValidationError(
+                "A guest with this national ID already exists."
+            )
         return value
 
     def validate_nationality(self, value):
@@ -167,16 +206,27 @@ class GuestSerializer(serializers.ModelSerializer):
         - If nationality is unknown (or a special value) require an uploaded flag.
         - Clean up or normalize fields if needed.
         """
-        nationality = attrs.get("nationality") or getattr(self.instance, "nationality", None)
-        country_flag = attrs.get("countryFlag") or getattr(self.instance, "countryFlag", None)
-        if nationality and nationality.lower() in ("unknown", "n/a") and not country_flag:
-            raise serializers.ValidationError("If nationality is unknown, please upload a country flag image.")
+        nationality = attrs.get("nationality") or getattr(
+            self.instance, "nationality", None
+        )
+        country_flag = attrs.get("countryFlag") or getattr(
+            self.instance, "countryFlag", None
+        )
+        if (
+            nationality
+            and nationality.lower() in ("unknown", "n/a")
+            and not country_flag
+        ):
+            raise serializers.ValidationError(
+                "If nationality is unknown, please upload a country flag image."
+            )
         return attrs
 
 
 # -----------------------
 # Booking Serializer (Write)
 # -----------------------
+
 
 class BookingWriteSerializer(serializers.ModelSerializer):
     """
@@ -214,7 +264,9 @@ class BookingWriteSerializer(serializers.ModelSerializer):
 
     def validate_totalPrice(self, value):
         if value is None or value < 0:
-            raise serializers.ValidationError("Total price must be zero or a positive number.")
+            raise serializers.ValidationError(
+                "Total price must be zero or a positive number."
+            )
         return value
 
     # ------------------------
@@ -232,22 +284,30 @@ class BookingWriteSerializer(serializers.ModelSerializer):
         num_nights = attrs.get("numNights") or getattr(self.instance, "numNights", None)
         cabin = attrs.get("cabin") or getattr(self.instance, "cabin", None)
         num_guests = attrs.get("numGuests") or getattr(self.instance, "numGuests", None)
-        cabin_price = attrs.get("cabinPrice") or getattr(self.instance, "cabinPrice", None)
+        cabin_price = attrs.get("cabinPrice") or getattr(
+            self.instance, "cabinPrice", None
+        )
         extras = attrs.get("extrasPrice") or getattr(self.instance, "extrasPrice", 0)
         total = attrs.get("totalPrice") or getattr(self.instance, "totalPrice", None)
 
         # Date checks
         if start and end:
             if start > end:
-                raise serializers.ValidationError({"endDate": "endDate must be the same or after startDate."})
+                raise serializers.ValidationError(
+                    {"endDate": "endDate must be the same or after startDate."}
+                )
             if start < date.today():
-                raise serializers.ValidationError({"startDate": "startDate cannot be in the past."})
+                raise serializers.ValidationError(
+                    {"startDate": "startDate cannot be in the past."}
+                )
 
             # Defensive check: numNights must equal date difference in days
             expected_nights = (end - start).days or 1
             if num_nights is not None and num_nights != expected_nights:
                 raise serializers.ValidationError(
-                    {"numNights": f"numNights ({num_nights}) does not match the date range ({expected_nights})."}
+                    {
+                        "numNights": f"numNights ({num_nights}) does not match the date range ({expected_nights})."
+                    }
                 )
 
         # Cabin capacity check
@@ -259,7 +319,9 @@ class BookingWriteSerializer(serializers.ModelSerializer):
                 cap = None
             if cap is not None and num_guests > cap:
                 raise serializers.ValidationError(
-                    {"numGuests": f"numGuests ({num_guests}) exceeds cabin capacity ({cap})."}
+                    {
+                        "numGuests": f"numGuests ({num_guests}) exceeds cabin capacity ({cap})."
+                    }
                 )
 
         # Pricing sanity check
@@ -268,7 +330,9 @@ class BookingWriteSerializer(serializers.ModelSerializer):
             extras_val = extras or 0
             if total < (min_expected + extras_val):
                 raise serializers.ValidationError(
-                    {"totalPrice": "totalPrice must be at least cabinPrice * numNights + extrasPrice."}
+                    {
+                        "totalPrice": "totalPrice must be at least cabinPrice * numNights + extrasPrice."
+                    }
                 )
 
         return attrs
@@ -277,6 +341,7 @@ class BookingWriteSerializer(serializers.ModelSerializer):
 # -----------------------
 # Settings Serializer
 # -----------------------
+
 
 class SettingsSerializer(serializers.ModelSerializer):
     """
@@ -294,10 +359,18 @@ class SettingsSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         # ensure min <= max for bookings
-        min_len = attrs.get("minBookingLength") or getattr(self.instance, "minBookingLength", None)
-        max_len = attrs.get("maxBookingLength") or getattr(self.instance, "maxBookingLength", None)
+        min_len = attrs.get("minBookingLength") or getattr(
+            self.instance, "minBookingLength", None
+        )
+        max_len = attrs.get("maxBookingLength") or getattr(
+            self.instance, "maxBookingLength", None
+        )
         if min_len is not None and max_len is not None and min_len > max_len:
-            raise serializers.ValidationError({"maxBookingLength": "maxBookingLength must be >= minBookingLength."})
+            raise serializers.ValidationError(
+                {"maxBookingLength": "maxBookingLength must be >= minBookingLength."}
+            )
         return attrs
+
+
 class MessageSerializer(serializers.Serializer):
     message = serializers.CharField()

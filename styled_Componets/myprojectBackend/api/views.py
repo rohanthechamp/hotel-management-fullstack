@@ -1,7 +1,7 @@
 from ast import Dict
 from warnings import filters
 from flask import request
-from rest_framework import generics, filters
+from rest_framework import generics, filters, status
 import rest_framework
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
@@ -20,6 +20,7 @@ from .serializers import (
     BookingWriteSerializer,
     SettingsSerializer,
     MessageSerializer,
+    UserRegisterSerializer,
 )
 from django.core.cache import cache
 from django.http import JsonResponse
@@ -243,3 +244,16 @@ class HomeView(APIView):
 
     def get_queryset(self):
         return super().get_queryset()
+
+
+class RegisterUserView(APIView):
+
+    def post(self, request, format=None):
+        serializer = UserRegisterSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()  # calls create() and hashes password
+            return Response(
+                {"message": "User created successfully"}, status=status.HTTP_201_CREATED
+            )
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
