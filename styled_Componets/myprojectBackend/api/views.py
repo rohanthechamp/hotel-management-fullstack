@@ -1,4 +1,5 @@
 from ast import Dict
+from ctypes import Array
 from warnings import filters
 from flask import request
 from rest_framework import generics, filters, status
@@ -7,12 +8,8 @@ from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from django_filters.rest_framework import DjangoFilterBackend
-
-# from stripe import Product/
-
 from api.filters import CabinsFilter, PaidBookings, RecentPaidBookings
 from api.pagination import CustomPagination
-
 from .models import Cabins, Guests, Bookings, Settings
 from .serializers import (
     CabinSerializer,
@@ -20,12 +17,17 @@ from .serializers import (
     BookingWriteSerializer,
     SettingsSerializer,
     MessageSerializer,
+    # UserLoginSerializer,
     UserRegisterSerializer,
+    EmailTokenObtainPairSerializer,
 )
 from django.core.cache import cache
-from django.http import JsonResponse
 from rest_framework.views import APIView
+from django.contrib.auth.hashers import check_password
+from django.contrib.auth import get_user_model
+from rest_framework_simplejwt.views import TokenObtainPairView
 
+# from .serializers import CustomTokenObtainPairSerializer
 
 # ----------------------------------------------------------
 # *📌 CABINS
@@ -247,7 +249,6 @@ class HomeView(APIView):
 
 
 class RegisterUserView(APIView):
-
     def post(self, request, format=None):
         serializer = UserRegisterSerializer(data=request.data)
         if serializer.is_valid():
@@ -255,5 +256,70 @@ class RegisterUserView(APIView):
             return Response(
                 {"message": "User created successfully"}, status=status.HTTP_201_CREATED
             )
+        return Response(
+            serializer.errors, status=status.HTTP_400_BAD_REQUEST
+        )  # if any error then return this response
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class EmailTokenObtainPairView(TokenObtainPairView):
+    serializer_class = EmailTokenObtainPairSerializer
+
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        data = response.data
+        refresh = data.get("refresh")
+        access = data.get("access")
+        # setting the refresh token in cookie for secure
+        response.set_cookie(
+            key="refresh",
+            value=refresh,
+            secure=True,
+            httponly=True,
+            samesite="Strict",
+            max_age=7 * 24 * 60 * 60,  # 7 days
+        )
+        response.data = {"access": access} # just sending the access token
+        return response
+
+
+# class LoginUserView(APIView):
+
+#     def post(self, request, format=None):
+#         serializer = UserLoginSerializer(data=request.data)
+#         if serializer.is_valid():
+
+#             userData = serializer.validated_data
+#             email = userData["email"]
+#             password = userData["password"]
+
+#             User = get_user_model()
+
+#             try:
+#                 currentSignInUser = User.objects.get(email=email)
+
+#             except User.DoesNotExist:
+#                 return Response(
+#                     {"message": "Authentication failed — email does not exist"},
+#                     status=status.HTTP_404_NOT_FOUND,
+#                 )
+
+#             if not check_password(password, currentSignInUser.password):
+
+#                 return Response(
+#                     {"message": "Authentication failed — incorrect password"},
+#                     status=status.HTTP_401_UNAUTHORIZED,
+#                 )
+
+#             else:
+
+#                 return Response(
+#                     {
+#                         "message": f"User authenticated successfully as {currentSignInUser.username}",
+#                         "username": f"{currentSignInUser.username}",
+#                     },
+#                     status=status.HTTP_200_OK,
+#                 )
+
+#         return Response(
+#             serializer.errors, status=status.HTTP_400_BAD_REQUEST
+#         )  # if any error then return this response

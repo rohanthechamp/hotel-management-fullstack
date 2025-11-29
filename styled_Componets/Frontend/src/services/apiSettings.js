@@ -5,6 +5,9 @@ export async function getSettings() {
   console.log(res.data[0])
   return res?.data[0];
 }
+/* The code snippet provided is setting up an Axios client in JavaScript for making HTTP requests to
+a Django REST framework (DRF) backend API. The `axios.create()` method is used to create a new
+Axios instance with custom configuration options. */
 
 // // GET a single setting (usually ID=1)
 // export async function getSingleSetting(id) {

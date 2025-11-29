@@ -5,15 +5,15 @@ Django settings for myprojectBackend project.
 from pathlib import Path
 import os
 
-# from datetime import timedelta
-from dotenv import load_dotenv
 
+from datetime import datetime, timedelta
+from dotenv import load_dotenv
 
 
 # # Load .env
 load_dotenv()
 
-# JWT_SIGNING_KEY = os.getenv("JWT_SIGNING_KEY")
+JWT_SIGNING_KEY = os.getenv("JWT_SIGNING_KEY")
 DJANGO_SECRET_KEY = os.getenv("SECRET_KEY")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -58,7 +58,6 @@ CORS_ALLOW_HEADERS = [
     "cache-control",
     "x-requested-with",
 ]
-
 
 
 ROOT_URLCONF = "myprojectBackend.urls"
@@ -125,12 +124,12 @@ USE_TZ = True
 STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# REST Framework
+# REST Framewor
 REST_FRAMEWORK = {
-    # "DEFAULT_AUTHENTICATION_CLASSES": [
-    #     "rest_framework_simplejwt.authentication.JWTAuthentication",
-    #     "rest_framework.authentication.SessionAuthentication",
-    # ],
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",
@@ -151,17 +150,17 @@ REST_FRAMEWORK = {
 # SIMPLE JWT CONFIGURATION
 # ==========================
 
-# SIMPLE_JWT = {
-#     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=1),
-#     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
-#     "ROTATE_REFRESH_TOKENS": True,
-#     "BLACKLIST_AFTER_ROTATION": True,
-#     "ALGORITHM": "HS256",
-#     "SIGNING_KEY": JWT_SIGNING_KEY,
-#     # Recommended defaults
-#     "AUTH_HEADER_TYPES": ("Bearer",),
-#     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
-#     "USER_ID_FIELD": "id",
-#     "USER_ID_CLAIM": "user_id",
-#     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
-# }
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=1),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": JWT_SIGNING_KEY,
+    # Recommended defaults
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+}

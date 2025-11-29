@@ -4,46 +4,85 @@ import FormRow from "../../ui/FormRow";
 import Input from "../../ui/Input";
 import { useForm } from "react-hook-form";
 import { formDataHandel } from "../../utils/helpers";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { useAuth } from "../../services/AuthContext";
 // Email regex: /\S+@\S+\.\S+/
 
 function SignupForm() {
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [formData, setFormData] = useState(null);
+  const { createUser } = useAuth();
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
-    getValues
+    getValues,
+  } = useForm(); // initialized form useform library
+  if (formData !== null) console.log("state value", Object.fromEntries(formData))
 
-  } = useForm();  // initialized form useform library
 
-  const onSubmit = (data) => {
-    // console.log(data)
-// 
-    const formdata = formDataHandel(data)
-    console.log('register form values - ')
-    for (const [k, v] of formdata.entries()) console.log(k, v);
+  useEffect(() => {  // we can change this to simple 
+    if (!isSubmitted) return;
+    (async () => {
+      try {
+        const response = await createUser(formData);
+        console.log(response)
 
-reset()
-  }
+        toast.success(String(response.message));
+      } catch (error) {
+        toast.error(`Failed to create user!${error} `);
+      } finally {
+        setIsSubmitted(false);
+        setFormData(null);
+      }
+    })();
+  }, [isSubmitted]);
+
+  const onSubmit = async (data) => {
+    console.log('in on submit data', data)
+    const value = formDataHandel(data);
+    
+
+    // console.log('in on submit value',value)
+    console.log( "in on submit value", Object.fromEntries(value))
+    setFormData(value);
+
+    setIsSubmitted(true);
+    reset();
+  };
+
   return (
-    <Form onSubmit={handleSubmit(onSubmit)} >
-      <FormRow label="Full name" error={errors?.fullName?.message}>
-        <Input type="text" id="fullName"    {...register("fullName", { required: "fullName is required" })} disabled={''} />
-
+    <Form onSubmit={handleSubmit(onSubmit)}>
+      <FormRow label="username" error={errors?.username?.message}>
+        <Input
+          type="text"
+          id="username"
+          {...register("username", { required: "username is required" })}
+          disabled={""}
+        />
       </FormRow>
 
       <FormRow label="Email address" error={errors?.email?.message}>
-        <Input type="email" id="email"   {...register('email', {
-          required: 'Email is required',
-          pattern: {
-            value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-            message: 'Invalid email address'
-          }
-        })} />
+        <Input
+          type="email"
+          id="email"
+          {...register("email", {
+            required: "Email is required",
+            pattern: {
+              value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+              message: "Invalid email address",
+            },
+          })}
+        />
 
       </FormRow>
-      <FormRow label="Password (min 8 characters)" error={errors?.password?.message}>
+      <FormRow
+        label="Password (min 8 characters)"
+        error={errors?.password?.message}
+      >
         <Input
           type="password"
           id="password"
@@ -68,16 +107,17 @@ reset()
               return val === password || "Passwords should match!";
             },
           })}
-        />
+        /> 
       </FormRow>
-
 
       <FormRow>
         {/* type is an HTML attribute! */}
         <Button variation="secondary" type="reset">
           Cancel
         </Button>
-        <Button>Create new user</Button>
+        <Button disabled={isSubmitted}>
+          {isSubmitted ? <p>Creating New User ...</p> : <p> Create new user</p>}
+        </Button>
       </FormRow>
     </Form>
   );

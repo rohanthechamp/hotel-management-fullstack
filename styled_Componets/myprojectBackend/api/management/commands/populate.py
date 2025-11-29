@@ -1,4 +1,5 @@
 # management/commands/populate.py
+import email
 import random
 from decimal import Decimal
 from datetime import date, timedelta
@@ -30,6 +31,7 @@ class Command(BaseCommand):
     @transaction.atomic
     def handle(self, *args, **options):
         User = get_user_model()
+        User.objects.exclude(email="demo@example.com").delete
         cabin_count = options["cabins"]
         guest_count = options["guests"]
         booking_count = options["bookings"]
