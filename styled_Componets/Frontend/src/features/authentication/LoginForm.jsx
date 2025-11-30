@@ -5,7 +5,8 @@ import Input from "../../ui/Input";
 import FormRow from "../../ui/FormRow";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import {  useAuth } from "../../services/AuthContext";
+import { useAuth } from "../../services/useAuth";
+
 function LoginForm() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { loginUser } = useAuth()
@@ -16,7 +17,7 @@ function LoginForm() {
     formState: { errors },
     reset,
   } = useForm({
-    defaultValues: { email: "demo@example.com", password: "demo12345" },
+    defaultValues: { email: "rohan@gmail.com", password: "1234rohan@" },
   }); // initialized form useform <library></library>
 
   const onSubmit = async (data) => {
@@ -27,12 +28,20 @@ function LoginForm() {
 
 
       const responseMsg = response?.data?.message;
+      console.log('Status Code' ,response.status)
       toast.success(responseMsg);
     } catch (error) {
       let responseError =
-        error?.response?.data?.message || "Authentication Fuked ";
+        error?.response?.message || "Authentication Failed ";
+      
+      let responseStatusText = error?.response?.statusText
+      let responseStatusCode = error?.response?.status
       console.log("Error details:", error);
-      toast.error(String(responseError));
+      console.log("Error Response :", responseError);
+      console.log('Status Code', responseStatusCode) 
+      console.log('Status Text', responseStatusText)
+
+      toast.error(String(responseStatusText));
     } finally {
       reset();
       setIsSubmitted(false);

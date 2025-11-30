@@ -6,7 +6,8 @@ import { useForm } from "react-hook-form";
 import { formDataHandel } from "../../utils/helpers";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useAuth } from "../../services/AuthContext";
+import { useAuth } from "../../services/useAuth";
+
 // Email regex: /\S+@\S+\.\S+/
 
 function SignupForm() {

@@ -4,25 +4,22 @@ Django settings for myprojectBackend project.
 
 from pathlib import Path
 import os
-
-
-from datetime import datetime, timedelta
+from datetime import timedelta
 from dotenv import load_dotenv
 
-
-# # Load .env
+# Load .env variables
 load_dotenv()
-
-JWT_SIGNING_KEY = os.getenv("JWT_SIGNING_KEY")
-DJANGO_SECRET_KEY = os.getenv("SECRET_KEY")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = DJANGO_SECRET_KEY
-DEBUG = True
-ALLOWED_HOSTS = []
+SECRET_KEY = os.getenv("SECRET_KEY")
+JWT_SIGNING_KEY = os.getenv("JWT_SIGNING_KEY")
 
-# Apps
+DEBUG = True
+
+ALLOWED_HOSTS = ["*"]  # Allow all during local development
+
+# Installed Apps
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -30,15 +27,19 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # Local apps
     "api",
+    # Third-party
     "rest_framework",
     "corsheaders",
-    # "rest_framework_simplejwt.token_blacklist",
     "django_filters",
 ]
-# python manage.py makemigrations [app_name]
+
+# 👈 Custom User Model enabled
+
+# Middleware
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",   # must be very top
+    "corsheaders.middleware.CorsMiddleware",  # Must be on top
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -47,18 +48,6 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
-CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_HEADERS = [
-    "authorization",
-    "content-type",
-    "accept",
-    "origin",
-    "user-agent",
-    "dnt",
-    "cache-control",
-    "x-requested-with",
-]
-
 
 ROOT_URLCONF = "myprojectBackend.urls"
 
@@ -80,18 +69,11 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "myprojectBackend.wsgi.application"
 
-# DB
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.sqlite3",
-#         "NAME": BASE_DIR / "db.sqlite3",
-#     }
-# }
-# DB postgresql
+# PostgreSQL Database
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "mydb_project2",  # 👈 change only this
+        "NAME": "mydb_project2",
         "USER": "postgres",
         "PASSWORD": "Best",
         "HOST": "localhost",
@@ -99,14 +81,30 @@ DATABASES = {
     }
 }
 
+# Email Authentication Support
+AUTHENTICATION_BACKENDS = [
+    "api.authentication.EmailBackend",  # Login using email
+    "django.contrib.auth.backends.ModelBackend",  # Required for admin login
+]
 
-# CORS
+# CORS Settings
+CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
-    # example
     "http://localhost:5173",
 ]
 
-# Password Validators
+CORS_ALLOW_HEADERS = [
+    "authorization",
+    "content-type",
+    "accept",
+    "origin",
+    "user-agent",
+    "dnt",
+    "cache-control",
+    "x-requested-with",
+]
+
+# Django Password Validators
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
@@ -116,15 +114,19 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
+
+AUTH_USER_MODEL = "api.CustomUser"
+# Localization
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
+# Static Files
 STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# REST Framewor
+# DRF Configuration
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -133,34 +135,20 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",
-        # "rest_framework.filters.OrderingFilter",
-        # "rest_framework.filters.SearchFilter",
     ],
-    # "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    # 👇 GLOBAL PAGINATION SETTINGS
-    # "DEFAULT_PAGINATION_CLASS":'api.pagination.CustomPagination',
-    # "PAGE_SIZE": 20,  # Default page size
-    # "PAGE_SIZE_QUERY_PARAM": "pagesize",  # Allow users to change page size from URL
-    # "MAX_PAGE_SIZE": 25,  # Max limit for pagesize
-    # "PAGE_QUERY_PARAM": "pagenumber",  # Change ?page= to ?pagenumber=
 }
 
-# pagesize
-# ==========================
-# SIMPLE JWT CONFIGURATION
-# ==========================
-
+# Simple JWT Configuration
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=1),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=3),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "ALGORITHM": "HS256",
     "SIGNING_KEY": JWT_SIGNING_KEY,
-    # Recommended defaults
     "AUTH_HEADER_TYPES": ("Bearer",),
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
-    "USER_ID_FIELD": "id",
-    "USER_ID_CLAIM": "user_id",
+    "USER_ID_FIELD": "email",
+    "USER_ID_CLAIM": "email",
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
 }

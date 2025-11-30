@@ -67,10 +67,12 @@ class CabinCreateListView(generics.ListCreateAPIView):
         return queryset
 
     def get_permissions(self):
-        """Allow public GET, admin-only POST."""
+        """Allow Authenticate GET, admin-only POST."PUT", "PATCH", "DELETE"]"""
         return (
             [IsAdminUser()]
-            if self.request.method in ["PUT", "PATCH", "DELETE"]  # needs POST
+            if self.request.method
+            in ["POST", "PUT", "PATCH", "DELETE"]  
+            # else [IsAuthenticated()]
             else [AllowAny()]
         )
 
@@ -230,8 +232,7 @@ class SingleSettingsView(generics.RetrieveUpdateDestroyAPIView):
 
 class HomeView(APIView):
 
-    # permission_classes = (IsAuthenticated,)
-    permission_classes = (AllowAny,)
+    permission_classes = (IsAuthenticated,)
 
     def get(self, request):
         BookingsCount = cache.get_or_set(
@@ -264,7 +265,8 @@ class RegisterUserView(APIView):
 class EmailTokenObtainPairView(TokenObtainPairView):
     serializer_class = EmailTokenObtainPairSerializer
 
-    def post(self, request, *args, **kwargs):
+
+    def post(self, request, *args, **kwargs):   
         response = super().post(request, *args, **kwargs)
         data = response.data
         refresh = data.get("refresh")
@@ -278,7 +280,7 @@ class EmailTokenObtainPairView(TokenObtainPairView):
             samesite="Strict",
             max_age=7 * 24 * 60 * 60,  # 7 days
         )
-        response.data = {"access": access} # just sending the access token
+        response.data = {"access": access}  # just sending the access token
         return response
 
 
