@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # Local apps
     "api",
+    "users",
     # Third-party
     "rest_framework",
     "corsheaders",
@@ -81,9 +82,9 @@ DATABASES = {
     }
 }
 
-# Email Authentication Support
+# # Email Authentication Support
 AUTHENTICATION_BACKENDS = [
-    "api.authentication.EmailBackend",  # Login using email
+
     "django.contrib.auth.backends.ModelBackend",  # Required for admin login
 ]
 
@@ -92,6 +93,8 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
 ]
+#  Put this early in settings.py (before migrations
+AUTH_USER_MODEL = "users.User"
 
 CORS_ALLOW_HEADERS = [
     "authorization",
@@ -115,7 +118,6 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-AUTH_USER_MODEL = "api.CustomUser"
 # Localization
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
@@ -148,7 +150,7 @@ SIMPLE_JWT = {
     "SIGNING_KEY": JWT_SIGNING_KEY,
     "AUTH_HEADER_TYPES": ("Bearer",),
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
-    "USER_ID_FIELD": "email",
-    "USER_ID_CLAIM": "email",
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
 }

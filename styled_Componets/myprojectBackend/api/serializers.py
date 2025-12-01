@@ -3,10 +3,10 @@ from rest_framework import serializers
 from django.core.validators import RegexValidator
 from .models import Cabins, Guests, Bookings, Settings
 from PIL import Image
-from django.contrib.auth.models import User
+# from django.contrib.auth.mo//dels import User
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from django.contrib.auth import get_user_model
+
 
 # -----------------------
 # Reusable validators
@@ -53,46 +53,6 @@ def validate_image_file(value):
         raise serializers.ValidationError("Only JPEG and PNG images are allowed.")
 
     return value
-
-
-# -----------------------
-# UserRegister Serializer
-# -----------------------
-
-
-class UserRegisterSerializer(serializers.Serializer):
-    username = serializers.CharField(required=True)
-    email = serializers.EmailField(required=True)
-    password = serializers.CharField(write_only=True, min_length=8)
-    passwordConfirm = serializers.CharField(write_only=True, min_length=8)
-
-    def validate_email(self, value):
-        User = get_user_model()
-
-        if User.objects.filter(email=value).exists():
-            raise serializers.ValidationError("This email is already registered.")
-
-    def create(self, validated_data):
-        validated_data.pop("passwordConfirm")  # remove field not in model
-        user = User.objects.create_user(
-            username=validated_data["username"],
-            email=validated_data["email"],
-            password=validated_data["password"],
-        )
-        return user
-
-
-# class UserLoginSerializer(serializers.Serializer):
-
-#     email = serializers.EmailField(required=True)
-#     password = serializers.CharField(write_only=True, min_length=8)
-
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-
-
-class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
-    username_field = "email"
-
 
 
 
