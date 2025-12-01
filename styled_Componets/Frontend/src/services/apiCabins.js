@@ -6,7 +6,7 @@ import supabase, { supabaseUrl } from "./supabase";
 export const getCabins = async (sortValue, filterValue) => {
     try {
         if (sortValue === 'all' && filterValue === 'all') {
-            const { data } = await axiosClient.get("/cabins/"); return data?.results || [];
+            const { data } = await axiosClient.get("api/cabins/"); return data?.results || [];
         }
         const params = {};
 
@@ -29,7 +29,7 @@ export const getCabins = async (sortValue, filterValue) => {
             params.ordering = direction === "asc" ? mappedField : `-${mappedField}`;
         }
 
-        const { data } = await axiosClient.get("/cabins/", { params });
+        const { data } = await axiosClient.get("api//cabins/", { params });
         return data?.results ?? []; // consistent array return
     } catch (error) {
         console.error("Error fetching cabins:", error);
@@ -38,7 +38,7 @@ export const getCabins = async (sortValue, filterValue) => {
 };
 // SINGLE cabin
 export async function getCabin(id) {
-    const res = await axiosClient.get(`cabins/${id}/`);
+    const res = await axiosClient.get(`api/cabins/${id}/`);
     return res.data;
 }
 
@@ -125,6 +125,6 @@ export const createEditCabins = async (newCabinData, id) => {
     
 // }
 export async function deleteCabins(id) {
-    const res = await axiosClient.delete(`cabins/${id}/`);
+    const res = await axiosClient.delete(`api/cabins/${id}/`);
     return res.data;
 }

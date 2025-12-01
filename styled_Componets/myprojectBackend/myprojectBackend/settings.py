@@ -1,7 +1,3 @@
-"""
-Django settings for myprojectBackend project.
-"""
-
 from pathlib import Path
 import os
 from datetime import timedelta
@@ -34,9 +30,11 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders",
     "django_filters",
+    "rest_framework_simplejwt.token_blacklist",
 ]
 
-# 👈 Custom User Model enabled
+# Custom User Model
+AUTH_USER_MODEL = "users.User"
 
 # Middleware
 MIDDLEWARE = [
@@ -82,9 +80,8 @@ DATABASES = {
     }
 }
 
-# # Email Authentication Support
+# Authentication backends
 AUTHENTICATION_BACKENDS = [
-
     "django.contrib.auth.backends.ModelBackend",  # Required for admin login
 ]
 
@@ -93,9 +90,6 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
 ]
-#  Put this early in settings.py (before migrations
-AUTH_USER_MODEL = "users.User"
-
 CORS_ALLOW_HEADERS = [
     "authorization",
     "content-type",
@@ -107,7 +101,7 @@ CORS_ALLOW_HEADERS = [
     "x-requested-with",
 ]
 
-# Django Password Validators
+# Password Validators
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
@@ -117,22 +111,33 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-
 # Localization
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
-# Static Files
-STATIC_URL = "static/"
+# Static files (CSS, JS, images)
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"  # For collectstatic
+STATICFILES_DIRS = [
+    BASE_DIR / "static",  # optional: for project-level static files
+]
+
+# Media files (uploads)
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+# settings.py
+JWT_AUTH_COOKIE = "access_token"  # or whatever cookie name you set in login response
 
 # DRF Configuration
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-        "rest_framework.authentication.SessionAuthentication",
+        "users.authentication.CookieJWTAuthentication",  # Custom authentication
+        # "rest_framework_simplejwt.authentication.JWTAuthentication",
+        # "rest_framework.authentication.SessionAuthentication",
     ],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_FILTER_BACKENDS": [
@@ -142,8 +147,8 @@ REST_FRAMEWORK = {
 
 # Simple JWT Configuration
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=3),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=2),
+    "REFRESH_TOKEN_LIFETIME": timedelta(minutes=3),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "ALGORITHM": "HS256",

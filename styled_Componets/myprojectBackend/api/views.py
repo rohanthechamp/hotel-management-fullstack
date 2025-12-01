@@ -19,7 +19,6 @@ from django.core.cache import cache
 from rest_framework.views import APIView
 
 
-
 # ----------------------------------------------------------
 # *📌 CABINS
 # ----------------------------------------------------------
@@ -63,8 +62,8 @@ class CabinCreateListView(generics.ListCreateAPIView):
             [IsAdminUser()]
             if self.request.method
             in ["POST", "PUT", "PATCH", "DELETE"]  
-            # else [IsAuthenticated()]
-            else [AllowAny()]
+            else [IsAuthenticated()]
+            # else [AllowAny()]
         )
 
 
@@ -181,14 +180,16 @@ class SettingsCreateListView(generics.ListCreateAPIView):
     """
     GET  /settings/    -> List all settings (public)
     POST /settings/    -> Add a setting (admin only)
+    
     """
+    # permission_classes = (IsAuthenticated,)
 
     queryset = Settings.objects.all()
     serializer_class = SettingsSerializer
 
     def get_permissions(self):
         """Allow public GET, admin-only POST."""
-        return [IsAdminUser()] if self.request.method == "POST" else [AllowAny()]
+        return [IsAdminUser()] if self.request.method == "POST" else [IsAuthenticated()]
 
 
 class SingleSettingsView(generics.RetrieveUpdateDestroyAPIView):
@@ -238,5 +239,3 @@ class HomeView(APIView):
 
     def get_queryset(self):
         return super().get_queryset()
-
-

@@ -1,7 +1,7 @@
 import axiosClient from "./axiosClient";
 
 export async function getSettings() {
-  const res = await axiosClient.get("settings/");
+  const res = await axiosClient.get("api/settings/");
   console.log(res.data[0])
   return res?.data[0];
 }
@@ -17,24 +17,24 @@ Axios instance with custom configuration options. */
 
 // UPDATE partial settings (PATCH)
 export async function updateSetting(id, payload) {
-  const res = await axiosClient.patch(`settings/${id}/`, payload);
+  const res = await axiosClient.patch(`api/settings/${id}/`, payload);
   return res.data;
 }
 
 // FULL replace (PUT)
 export async function replaceSetting(id, payload) {
-  const res = await axiosClient.put(`settings/${id}/`, payload);
+  const res = await axiosClient.put(`api/settings/${id}/`, payload);
   return res.data;
 }
 
 // CREATE new setting (admin only)
 export async function createSetting(payload) {
-  const res = await axiosClient.post("settings/", payload);
+  const res = await axiosClient.post("api/settings/", payload);
   return res.data;
 }
 
 // DELETE setting
 export async function deleteSetting(id) {
-  const res = await axiosClient.delete(`settings/${id}/`);
+  const res = await axiosClient.delete(`api/settings/${id}/`);
   return res.data;
 }

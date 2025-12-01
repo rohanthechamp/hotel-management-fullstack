@@ -7,6 +7,7 @@ import { formDataHandel } from "../../utils/helpers";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useAuth } from "../../services/useAuth";
+import { Navigate, useNavigate } from "react-router-dom";
 
 // Email regex: /\S+@\S+\.\S+/
 
@@ -14,7 +15,7 @@ function SignupForm() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [formData, setFormData] = useState(null);
   const { createUser } = useAuth();
-
+  const navigate = useNavigate()
   const {
     register,
     handleSubmit,
@@ -33,6 +34,8 @@ function SignupForm() {
         console.log(response)
 
         toast.success(String(response.message));
+        navigate('/login')
+      
       } catch (error) {
         toast.error(`Failed to create user!${error} `);
       } finally {

@@ -1,105 +1,102 @@
 
-###
-POST http://127.0.0.1:8000/api/guests/ HTTP/1.1
-Content-Type: application/json
-
-{
-  "fullName": "John Doe",
-  "email": "john.doe@example.com",
-  "nationalID": 9876543210,
-  "nationality": "India",
-  "countryFlag": ""
-}
-
-####
-
-POST http://127.0.0.1:8000/api/token/ HTTP/1.1
-Content-Type: application/json
-
-{
-  "email": "rohan@gmail.com",
-  "password": "1234rohan@"
-}
-
-####
-// admin user  - champ
-# password- john1717
-// email - champ@gmail.com
-
-#####
-POST http://127.0.0.1:8000/api/token/refresh/ HTTP/1.1
-Content-Type: application/json
-
-{
-  "refresh":  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc2Mzk5MjY1NiwiaWF0IjoxNzYzOTA2MjU2LCJqdGkiOiJiZmU0M2M0ODA0YzU0N2M5OWViMGYwNjBhMjRkNDY4MyIsInVzZXJfaWQiOiIyIn0.0sX6feYA8WmBDA5rVu3g0r8BBxKSmqkOdFnv9pfri80",
-}
-
-
-###
-GET http://127.0.0.1:8000/api/guests/
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzOTA2MzE2LCJpYXQiOjE3NjM5MDYyNTYsImp0aSI6ImVhYjM0NzhkMGJhYjQyM2NiZTA4YWUwY2FlMzFhYzQ5IiwidXNlcl9pZCI6IjIifQ.YhcFZLENkHkIuA1xojQ6ou-31T5qUdEmz87FNUCzyo8
-Content-Type: application/json
-
-
-
-
-
-####
-GET http://127.0.0.1:8000/api/guests/2/
-Authorization: Bearer   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzOTA2MjY2LCJpYXQiOjE3NjM5MDYyMDYsImp0aSI6IjlkYjNiNzI1NWI2MjRjNjRhOGUwNWQ4NGNkMjVlMTgxIiwidXNlcl9pZCI6IjIifQ.O8zXRlImuUcTPRyYyATcaLk1mAMZ7y0nnZc4Bc-1UkI"
-Content-Type: application/json
-
-{
-  "fullName": "Rohan",
-  "email": "rohan@example.com",
-  "nationalID": 490493009443,
-  "nationality": "India",
-  "countryFlag": 
-}
-######
-GET http://127.0.0.1:8000/api/bookings/
-
-
-#######
-
-# POST http://127.0.0.1:8000/api/register/ HTTP/1.1
+# ###
+# POST http://127.0.0.1:8000/api/guests/ HTTP/1.1
 # Content-Type: application/json
 
 # {
-#   "username": "John Doe",
+#   "fullName": "John Doe",
 #   "email": "john.doe@example.com",
-#   "password": "9876543210",
-
+#   "nationalID": 9876543210,
+#   "nationality": "India",
+#   "countryFlag": ""
 # }
 
-POST http://127.0.0.1:8000/api/register/ HTTP/1.1
+# ####
+
+# POST http://127.0.0.1:8000/api/token/ HTTP/1.1
+# Content-Type: application/json
+
+# {
+#   "email": "rohan@gmail.com",
+#   "password": "1234rohan@"
+# }
+
+# ####
+# // admin user  - champ
+# # password- john1717
+# // email - champ@gmail.com
+
+# #####
+# POST http://127.0.0.1:8000/api/token/refresh/ HTTP/1.1
+# Content-Type: application/json
+
+# {
+#   "refresh":  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc2Mzk5MjY1NiwiaWF0IjoxNzYzOTA2MjU2LCJqdGkiOiJiZmU0M2M0ODA0YzU0N2M5OWViMGYwNjBhMjRkNDY4MyIsInVzZXJfaWQiOiIyIn0.0sX6feYA8WmBDA5rVu3g0r8BBxKSmqkOdFnv9pfri80",
+# }
+
+
+# ###
+# GET http://127.0.0.1:8000/api/guests/
+# Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzOTA2MzE2LCJpYXQiOjE3NjM5MDYyNTYsImp0aSI6ImVhYjM0NzhkMGJhYjQyM2NiZTA4YWUwY2FlMzFhYzQ5IiwidXNlcl9pZCI6IjIifQ.YhcFZLENkHkIuA1xojQ6ou-31T5qUdEmz87FNUCzyo8
+# Content-Type: application/json
+
+
+
+
+
+# ####
+# GET http://127.0.0.1:8000/api/guests/2/
+# Authorization: Bearer   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzOTA2MjY2LCJpYXQiOjE3NjM5MDYyMDYsImp0aSI6IjlkYjNiNzI1NWI2MjRjNjRhOGUwNWQ4NGNkMjVlMTgxIiwidXNlcl9pZCI6IjIifQ.O8zXRlImuUcTPRyYyATcaLk1mAMZ7y0nnZc4Bc-1UkI"
+# Content-Type: application/json
+
+# {
+#   "fullName": "Rohan",
+#   "email": "rohan@example.com",
+#   "nationalID": 490493009443,
+#   "nationality": "India",
+#   "countryFlag": 
+# }
+# ######
+# GET http://127.0.0.1:8000/api/bookings/
+
+
+# #######
+
+# # POST http://127.0.0.1:8000/api/register/ HTTP/1.1
+# # Content-Type: application/json
+
+# # {
+# #   "username": "John Doe",
+# #   "email": "john.doe@example.com",
+# #   "password": "9876543210",
+
+# # }
+
+POST http://127.0.0.1:8000/users/register/ HTTP/1.1
 Content-Type: application/json
 
 {
-  "username": "John Doe",
-  "email": "john.doe@example.com",
-  "password": 9876543210,
-  "passwordConfirm":9876543210
+  
+  "email": "brock@example.com",
+  "password": "9876543210wrwegw4",
+  "name": "brock",
+  "passwordConfirm":"9876543210wrwegw4"
 }
 ############
 
-POST http://127.0.0.1:8000/api/login/ HTTP/1.1
+POST http://127.0.0.1:8000/users/login/ HTTP/1.1
 Content-Type: application/json
 
 {
 
-  "email": "emailchamp@email.com",
-  "password": 9876543210
+  "email": "brock@example.com",
+  "password": "9876543210wrwegw4"
 
 }
 
-##########
-POST http://127.0.0.1:8000/api/login/ HTTP/1.1
+# "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY0NjEzOTk0LCJpYXQiOjE3NjQ2MTM4NzQsImp0aSI6ImZlMTI0ODFlMDI2ODQ3YTBiMWI4NDJkY2Q2MjY4Y2I0IiwidXNlcl9pZCI6IjMifQ.gknvU3j3hoz9FPGOlG8He13Dq2R_u56iEZdeF-He4yI"
+# ###
+### Fetch cabins with Bearer token
+GET http://127.0.0.1:8000/api/settings/
 Content-Type: application/json
-
-{
-  "email": "demo@example.com",
-  "password": "demo12345"
-}
-
-####
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY0NjE0MjAzLCJpYXQiOjE3NjQ2MTQwODMsImp0aSI6ImUyZTkxYWRiOTY3ODRlYWQ4Y2JkMmZlNDgxYjAwZjM5IiwidXNlcl9pZCI6IjMifQ.HVjiV9BieCEEi3t5YgIOUlOsNutHiuz7kG_Yta7XBmA

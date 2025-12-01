@@ -17,7 +17,7 @@ function LoginForm() {
     formState: { errors },
     reset,
   } = useForm({
-    defaultValues: { email: "rohan@gmail.com", password: "1234rohan@" },
+    defaultValues: { email: "brock@example.com", password: "9876543210wrwegw4" },
   }); // initialized form useform <library></library>
 
   const onSubmit = async (data) => {

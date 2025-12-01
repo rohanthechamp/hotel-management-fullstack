@@ -25,7 +25,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data.pop("passwordConfirm", None)
         user = User.objects.create_user(
-            username=validated_data.get("username"),
+            name=validated_data.get("name"),
             email=validated_data.get("email"),
             tc=True,  # always true
             password=validated_data.get("password"),
@@ -37,3 +37,12 @@ class UserLoginSerializer(serializers.Serializer):
 
     email = serializers.EmailField(required=True)
     password = serializers.CharField(write_only=True, min_length=8, trim_whitespace=False)
+
+
+class UserLogOutSerializer(serializers.Serializer):
+
+    refresh = serializers.CharField(required=True)
+
+    def validate(self, attrs):
+        self.token = attrs["refresh"]
+        return attrs
