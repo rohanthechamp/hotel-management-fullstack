@@ -4,7 +4,6 @@ from api import serializers
 from .serializers import (
     UserLoginSerializer,
     UserRegisterSerializer,
-    UserLogOutSerializer,
 )
 from rest_framework import status
 from rest_framework.response import Response
@@ -21,6 +20,7 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.conf import settings
 
 
 User = get_user_model()
@@ -76,58 +76,67 @@ class LoginUserView(APIView):
                 "username": username,
                 "email": getattr(user, "email", None),
                 "access": access_token,
+                "refresh":refresh_token,
                 # Do NOT send refresh token in JSON anymore
             },
             status=status.HTTP_200_OK,
         )
 
-        # Set HttpOnly refresh cookie
-        # secure=True -> only for HTTPS in production; use False for local dev
-        response.set_cookie(
-            key="refresh_token",  # cookie name
-            value=refresh_token,  # refresh token
-            httponly=True,  # cannot be accessed by JS
-            secure=False,  # set True in production (HTTPS)
-            samesite="Strict",  # CSRF protection
-            max_age=7 * 24 * 60 * 60,  # cookie expiry in seconds (7 days)
-        )
+    
+        # response.set_cookie(
+        #     key="refresh_token",
+        #     value=refresh_token,
+        #     httponly=True,
+        #     secure=False,  # <--- MUST be False
+        #     # samesite="Lax" is the default now
+        #     max_age=7 * 24 * 60 * 60,
+        # )
 
+        # dev only     samesite="None",  # cross-origin/
         return response
 
 
-class CookieTokenRefreshView(APIView):
-    permission_classes = [AllowAny]
+# class CookieTokenRefreshView(APIView):
+#     permission_classes = [AllowAny]
 
-    def post(self, request):
-        # read refresh token from cookiegit a
-        refresh_token = request.COOKIES.get("refresh_token")
-        if not refresh_token:
-            return Response(
-                {"error": "Refresh token not found."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        try:
-            token = RefreshToken(refresh_token)
-            access_token = str(token.access_token)
-            return Response({"access": access_token}, status=status.HTTP_200_OK)
-        except TokenError:
-            return Response(
-                {"error": "Invalid or expired refresh token."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+#     def post(self, request):
+#         # read refresh token from cookie first
+#         refresh_token = request.COOKIES.get("refresh_token")
+
+#         # If not present in cookie (e.g. client didn't send cookies), allow
+#         # the refresh token to be supplied in the request body as fallback
+#         # (not recommended for production, prefer secure httpOnly cookies).
+#         # if not refresh_token:
+#         #   //refresh_token = request.data.get("refresh")
+
+#         if not refresh_token:
+#             return Response(
+#                 {"error": "Refresh token not found."},
+#                 status=status.HTTP_400_BAD_REQUEST,
+#             )
+#         try:
+#             token = RefreshToken(refresh_token)
+#             access_token = str(token.access_token)
+#             return Response({"access": access_token}, status=status.HTTP_200_OK)
+#         except TokenError:
+#             return Response(
+#                 {"error": "Invalid or expired refresh token."},
+#                 status=status.HTTP_400_BAD_REQUEST,
+#             )
 
 
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        refreshToken = request.data.get("refresh", None)
 
-        refreshToken = request.COOKIES.get("refresh_token")
         if not refreshToken:
             return Response(
-                {"error": "refresh token not found it must be expired "},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        {"error": "Refresh token missing or expired"},
+        status=status.HTTP_400_BAD_REQUEST,
+    )
+
 
         try:
             token = RefreshToken(refreshToken)
@@ -143,5 +152,5 @@ class LogoutView(APIView):
             {"message": "Logged out successfully."},
             status=status.HTTP_205_RESET_CONTENT,
         )
-        response.delete_cookie("refresh_token")
+   
         return response

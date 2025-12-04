@@ -1,7 +1,7 @@
-import axiosClient from "./axiosClient";
+import { axiosPrivate } from "./axiosClient";
 
 export async function getSettings() {
-  const res = await axiosClient.get("api/settings/");
+  const res = await axiosPrivate.get("api/settings/");
   console.log(res.data[0])
   return res?.data[0];
 }
@@ -11,30 +11,30 @@ Axios instance with custom configuration options. */
 
 // // GET a single setting (usually ID=1)
 // export async function getSingleSetting(id) {
-//   const res = await axiosClient.get(`settings/${id}/`);
+//   const res = await axiosPrivate.get(`settings/${id}/`);
 //   return res.data;
 // }
 
 // UPDATE partial settings (PATCH)
 export async function updateSetting(id, payload) {
-  const res = await axiosClient.patch(`api/settings/${id}/`, payload);
+  const res = await axiosPrivate.patch(`api/settings/${id}/`, payload);
   return res.data;
 }
 
 // FULL replace (PUT)
 export async function replaceSetting(id, payload) {
-  const res = await axiosClient.put(`api/settings/${id}/`, payload);
+  const res = await axiosPrivate.put(`api/settings/${id}/`, payload);
   return res.data;
 }
 
 // CREATE new setting (admin only)
 export async function createSetting(payload) {
-  const res = await axiosClient.post("api/settings/", payload);
+  const res = await axiosPrivate.post("api/settings/", payload);
   return res.data;
 }
 
 // DELETE setting
 export async function deleteSetting(id) {
-  const res = await axiosClient.delete(`api/settings/${id}/`);
+  const res = await axiosPrivate.delete(`api/settings/${id}/`);
   return res.data;
 }

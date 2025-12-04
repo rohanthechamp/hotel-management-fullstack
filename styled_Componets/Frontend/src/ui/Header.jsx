@@ -1,4 +1,5 @@
 import styled from "styled-components"
+// import { useAuth } from "../services/useAuth";
 
 // import React from 'react'
 const StyledHeader = styled.header`
@@ -7,8 +8,12 @@ const StyledHeader = styled.header`
   border-bottom: 1px solid var(--color-grey-300);
 `;
 const Header = () => {
+  // const { username } = useAuth()
   return (
     <StyledHeader>Header</StyledHeader>
+  //   {
+  //   // username ? <p>Hi {username} </p> : null
+  // }
   )
 }
 

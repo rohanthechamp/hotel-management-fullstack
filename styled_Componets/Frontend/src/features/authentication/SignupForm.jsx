@@ -6,15 +6,16 @@ import { useForm } from "react-hook-form";
 import { formDataHandel } from "../../utils/helpers";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useAuth } from "../../services/useAuth";
+// import { useAuth } from "../../services/useAuth";
 import { Navigate, useNavigate } from "react-router-dom";
+import { createUser } from "../../services/apiUser";
 
 // Email regex: /\S+@\S+\.\S+/
 
 function SignupForm() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [formData, setFormData] = useState(null);
-  const { createUser } = useAuth();
+
   const navigate = useNavigate()
   const {
     register,

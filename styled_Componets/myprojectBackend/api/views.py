@@ -26,7 +26,7 @@ from rest_framework.views import APIView
 
 class CabinCreateListView(generics.ListCreateAPIView):
     """
-    GET  /cabins/    -> List all cabins (public)
+    GET  /cabins/    -> List all cabins (authenticated)
     POST /cabins/    -> Create a cabin (admin only)
     """
 
@@ -63,7 +63,7 @@ class CabinCreateListView(generics.ListCreateAPIView):
             if self.request.method
             in ["POST", "PUT", "PATCH", "DELETE"]  
             else [IsAuthenticated()]
-            # else [AllowAny()]
+           
         )
 
 
@@ -231,7 +231,7 @@ class HomeView(APIView):
             "bookings_count", lambda: Bookings.objects.count(), timeout=300
         )
 
-        data = {"count": BookingsCount, "message": f"Hello {request.user.username}!"}
+        data = {"count": BookingsCount, "message": f"Hello {request.user.name}!"}
 
         serializer = MessageSerializer(data)
 

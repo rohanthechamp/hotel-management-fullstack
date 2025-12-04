@@ -1,5 +1,4 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
 import Dashboard from "./pages/Dashboard";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
@@ -16,6 +15,7 @@ import { Toaster } from "react-hot-toast";
 import BookingDetail from "./features/bookings/BookingDetail";
 import CheckInOut from "./pages/CheckInOut";
 import SignUp from "./pages/SignUp";
+import useAxiosPrivate from "./hooks/useAxiosPrivate";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,6 +25,8 @@ const queryClient = new QueryClient({
   },
 });
 const App = () => {
+  useAxiosPrivate(); // 👈 CALL THIS HOOK HERE! Interceptors now activate globally
+
   return (
     <QueryClientProvider client={queryClient}>
       <ReactQueryDevtools initialIsOpen={false} />
@@ -45,14 +47,14 @@ const App = () => {
 
 
             {/* <Route path="/check-in-outOut/check-in-out/:bookingId" element={<CheckIn />} />
-            <Route path="/check-in-outOut/check-out/:bookingId" element={<CheckIn />} /> */}
+            <Route path="/check-in-outOut/`check-out/:bookingId" element={<CheckIn />} /> */}
 
-            
+
 
             <Route path="/" element={<Account />} />
           </Route>
           <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<SignUp/>} />
+          <Route path="/register" element={<SignUp />} />
 
           <Route path="*" element={<PageNotFound />} />
 

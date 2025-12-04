@@ -1,15 +1,18 @@
-import {  useState } from "react";
+import { useState } from "react";
 import Button from "../../ui/Button";
 import Form from "../../ui/Form";
 import Input from "../../ui/Input";
 import FormRow from "../../ui/FormRow";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { useAuth } from "../../services/useAuth";
+import axiosClient from "../../services/axiosClient";
+import useAuth from "../../hooks/useAuth";
 
 function LoginForm() {
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const { loginUser } = useAuth()
+
+  // const { loginUser } = useAuth()
+  const { setAuth } = useAuth();
 
   const {
     register,
@@ -17,32 +20,47 @@ function LoginForm() {
     formState: { errors },
     reset,
   } = useForm({
-    defaultValues: { email: "brock@example.com", password: "9876543210wrwegw4" },
+    defaultValues: {
+      email: "brock@example.com",
+      password: "9876543210wrwegw4",
+    },
   }); // initialized form useform <library></library>
 
   const onSubmit = async (data) => {
     if (!data) return;
     setIsSubmitted(true);
+
+    // const response = await loginUser(data);
+
     try {
-      const response = await loginUser(data);
 
 
-      const responseMsg = response?.data?.message;
-      console.log('Status Code' ,response.status)
-      toast.success(responseMsg);
+      // after successful login
+      const res = await axiosClient.post("users/login/", data);
+      const responseData = res?.data || {};
+      const accessToken = responseData.access;
+      const refreshToken = responseData.refresh;
+
+      localStorage.setItem('refreshToken', refreshToken)
+      localStorage.setItem('accessToken', accessToken)
+      console.log(
+        'assigned accessToken refreshToken to localStorage  after LOGIN- ', refreshToken, accessToken
+      )
+
+      // store minimal, consistent slice
+      setAuth(prev => ({ ...prev, user: responseData.user ?? prev.user, accessToken, refreshToken }));
+
+      // better success message
+      toast.success(responseData.message || "Logged in successfully");
+
+
     } catch (error) {
-      let responseError =
-        error?.response?.message || "Authentication Failed ";
-      
-      let responseStatusText = error?.response?.statusText
-      let responseStatusCode = error?.response?.status
-      console.log("Error details:", error);
-      console.log("Error Response :", responseError);
-      console.log('Status Code', responseStatusCode) 
-      console.log('Status Text', responseStatusText)
+      const serverMessage = error?.response?.data?.message || error?.message || "Authentication failed";
+      setAuth({ user: null, accessToken: null });
+      toast.error(String(serverMessage));
+    }
 
-      toast.error(String(responseStatusText));
-    } finally {
+    finally {
       reset();
       setIsSubmitted(false);
     }

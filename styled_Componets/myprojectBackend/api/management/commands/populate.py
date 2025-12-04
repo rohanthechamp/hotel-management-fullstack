@@ -38,7 +38,7 @@ class Command(BaseCommand):
         chunk_size = options["chunk"]
 
         demo_user, created = User.objects.get_or_create(
-            username="demo_user", defaults={"email": "demo@example.com"}
+            name="demo_user", defaults={"email": "demo@example.com"}
         )
         if created:
             demo_user.set_password("demo12345")

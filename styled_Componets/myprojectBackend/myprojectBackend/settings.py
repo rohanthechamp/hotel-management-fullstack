@@ -3,7 +3,6 @@ import os
 from datetime import timedelta
 from dotenv import load_dotenv
 
-# Load .env variables
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -13,9 +12,7 @@ JWT_SIGNING_KEY = os.getenv("JWT_SIGNING_KEY")
 
 DEBUG = True
 
-ALLOWED_HOSTS = ["*"]  # Allow all during local development
 
-# Installed Apps
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -33,12 +30,10 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
 ]
 
-# Custom User Model
 AUTH_USER_MODEL = "users.User"
 
-# Middleware
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",  # Must be on top
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -68,7 +63,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "myprojectBackend.wsgi.application"
 
-# PostgreSQL Database
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
@@ -80,28 +74,30 @@ DATABASES = {
     }
 }
 
-# Authentication backends
 AUTHENTICATION_BACKENDS = [
-    "django.contrib.auth.backends.ModelBackend",  # Required for admin login
+    "django.contrib.auth.backends.ModelBackend",
 ]
 
-# CORS Settings
+# CORS CONFIG (Local Dev)
 CORS_ALLOW_CREDENTIALS = True
+# Not using cookies for auth
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
 ]
+
 CORS_ALLOW_HEADERS = [
     "authorization",
     "content-type",
     "accept",
     "origin",
-    "user-agent",
-    "dnt",
     "cache-control",
     "x-requested-with",
 ]
 
-# Password Validators
+# CSRF Not required for local JWT body auth
+CSRF_TRUSTED_ORIGINS = []
+
+# Password Validation
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
@@ -111,51 +107,39 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-# Localization
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JS, images)
 STATIC_URL = "/static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"  # For collectstatic
+STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [
-    BASE_DIR / "static",  # optional: for project-level static files
+    BASE_DIR / "static",
 ]
 
-# Media files (uploads)
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-# settings.py
-JWT_AUTH_COOKIE = "access_token"  # or whatever cookie name you set in login response
 
-# DRF Configuration
+# DRF Default Auth
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "users.authentication.CookieJWTAuthentication",  # Custom authentication
-        # "rest_framework_simplejwt.authentication.JWTAuthentication",
-        # "rest_framework.authentication.SessionAuthentication",
-    ],
-    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    "DEFAULT_FILTER_BACKENDS": [
-        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
 }
 
-# Simple JWT Configuration
+# SIMPLE JWT CONFIG
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=2),
-    "REFRESH_TOKEN_LIFETIME": timedelta(minutes=3),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=1),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    # IMPORTANT FOR LOCALSTORAGE FLOW
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
-    "ALGORITHM": "HS256",
-    "SIGNING_KEY": JWT_SIGNING_KEY,
     "AUTH_HEADER_TYPES": ("Bearer",),
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
-    "USER_ID_FIELD": "id",
-    "USER_ID_CLAIM": "user_id",
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": JWT_SIGNING_KEY,
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
 }

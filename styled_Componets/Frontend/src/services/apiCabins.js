@@ -1,4 +1,4 @@
-import axiosClient from "./axiosClient";
+import { axiosPrivate } from "./axiosClient";
 import supabase, { supabaseUrl } from "./supabase";
 
 // // supabase
@@ -6,7 +6,7 @@ import supabase, { supabaseUrl } from "./supabase";
 export const getCabins = async (sortValue, filterValue) => {
     try {
         if (sortValue === 'all' && filterValue === 'all') {
-            const { data } = await axiosClient.get("api/cabins/"); return data?.results || [];
+            const { data } = await axiosPrivate.get("api/cabins/"); return data?.results || [];
         }
         const params = {};
 
@@ -29,16 +29,16 @@ export const getCabins = async (sortValue, filterValue) => {
             params.ordering = direction === "asc" ? mappedField : `-${mappedField}`;
         }
 
-        const { data } = await axiosClient.get("api//cabins/", { params });
+        const { data } = await axiosPrivate.get("api/cabins/", { params });
         return data?.results ?? []; // consistent array return
     } catch (error) {
-        console.error("Error fetching cabins:", error);
+        console.error("Error fetching cabins:", error); 
         throw error; // rethrow so react-query sets error state
     }
 };
 // SINGLE cabin
 export async function getCabin(id) {
-    const res = await axiosClient.get(`api/cabins/${id}/`);
+    const res = await axiosPrivate.get(`api/cabins/${id}/`);
     return res.data;
 }
 
@@ -122,9 +122,9 @@ export const createEditCabins = async (newCabinData, id) => {
     }
 };
 // const deleteCabins = () => {
-    
+
 // }
 export async function deleteCabins(id) {
-    const res = await axiosClient.delete(`api/cabins/${id}/`);
+    const res = await axiosPrivate.delete(`api/cabins/${id}/`);
     return res.data;
 }
