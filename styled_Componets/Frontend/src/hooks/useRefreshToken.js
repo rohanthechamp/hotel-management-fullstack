@@ -8,27 +8,26 @@ const useRefreshToken = () => {
     const { setAuth } = useAuth();
 
     const refresh = async () => {
-        let refreshT = localStorage.getItem("refreshToken")
+        let refreshT = localStorage.getItem("refreshToken");
         console.log(
-            'retrieved the refreshToken from localStorage for generating REFRESHTOKEN', refreshT
-        )
-        const response = await axiosPrivate.post(
-            "/users/token/refresh/",
-            { refresh: refreshT }
-
+            "retrieved the refreshToken from localStorage for generating REFRESHTOKEN",
+            refreshT
         );
+        const response = await axiosPrivate.post("/users/token/refresh/", {
+            refresh: refreshT,
+        });
         const newAccessToken = response.data.access;
         setAuth((prev) => ({
             ...prev,
             accessToken: newAccessToken,
         }));
-        localStorage.setItem('accessToken', newAccessToken)
+        localStorage.setItem("accessToken", newAccessToken);
         console.log(
-            'assigned accessToken  to localStorage  after refreshtoken endpoint request for generating access token- ', newAccessToken
-        )
+            "assigned accessToken  to localStorage  after refreshtoken endpoint request for generating access token- ",
+            newAccessToken
+        );
 
-
-        return response.data.access
+        return response.data.access;
     };
     return refresh;
 };

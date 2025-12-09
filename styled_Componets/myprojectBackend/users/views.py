@@ -76,13 +76,12 @@ class LoginUserView(APIView):
                 "username": username,
                 "email": getattr(user, "email", None),
                 "access": access_token,
-                "refresh":refresh_token,
+                "refresh": refresh_token,
                 # Do NOT send refresh token in JSON anymore
             },
             status=status.HTTP_200_OK,
         )
 
-    
         # response.set_cookie(
         #     key="refresh_token",
         #     value=refresh_token,
@@ -133,10 +132,9 @@ class LogoutView(APIView):
 
         if not refreshToken:
             return Response(
-        {"error": "Refresh token missing or expired"},
-        status=status.HTTP_400_BAD_REQUEST,
-    )
-
+                {"error": "Refresh token missing or expired"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         try:
             token = RefreshToken(refreshToken)
@@ -152,5 +150,5 @@ class LogoutView(APIView):
             {"message": "Logged out successfully."},
             status=status.HTTP_205_RESET_CONTENT,
         )
-   
+
         return response

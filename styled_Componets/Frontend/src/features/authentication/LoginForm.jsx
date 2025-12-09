@@ -33,34 +33,43 @@ function LoginForm() {
     // const response = await loginUser(data);
 
     try {
-
-
       // after successful login
       const res = await axiosClient.post("users/login/", data);
       const responseData = res?.data || {};
+
+      console.log("RES DATA- ", res.data);
+
       const accessToken = responseData.access;
       const refreshToken = responseData.refresh;
+      const username = responseData.username;
+      const email = responseData.email;
+      const message = responseData.message || ''
 
-      localStorage.setItem('refreshToken', refreshToken)
-      localStorage.setItem('accessToken', accessToken)
-      console.log(
-        'assigned accessToken refreshToken to localStorage  after LOGIN- ', refreshToken, accessToken
-      )
+      localStorage.setItem("refreshToken", refreshToken);
+      localStorage.setItem("accessToken", accessToken);
 
-      // store minimal, consistent slice
-      setAuth(prev => ({ ...prev, user: responseData.user ?? prev.user, accessToken, refreshToken }));
+      // update context with full minimal slice
+      setAuth((prev) => ({
+        ...prev,
+        accessToken,
+        refreshToken,
+        username,
+        email,
+        message: message
+      }));
 
-      // better success message
       toast.success(responseData.message || "Logged in successfully");
-
-
     } catch (error) {
-      const serverMessage = error?.response?.data?.message || error?.message || "Authentication failed";
+      const serverMessage =
+        error?.response?.data?.detail ||
+
+      "Authentication failed";
+
+      console.log('Error Message -',  error?.response?.data?.detail);
+
       setAuth({ user: null, accessToken: null });
       toast.error(String(serverMessage));
-    }
-
-    finally {
+    } finally {
       reset();
       setIsSubmitted(false);
     }

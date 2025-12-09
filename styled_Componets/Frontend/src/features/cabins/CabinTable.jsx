@@ -26,6 +26,8 @@ const TableHeader = styled.header`
 
 const CabinTable = () => {
   const { isLoading, cabins, error } = useCabins();
+
+
   // const [searchParams] = useSearchParams();
   // const filterValue = searchParams.get("discount");
   // const sortValue = searchParams.get("sort");
@@ -111,6 +113,7 @@ const CabinTable = () => {
 
   if (error) return <ErrorIcon />;
   if (error) return <p>Error: {error.message}</p>;
+  // { auth?.user ? <p>Hi {auth.user}</p> : null }
 
   // Decide which cabins to show
   // const cabins = filterValue === "all" || !filterValue ? Cabins || [] : filteredCabins;
@@ -119,6 +122,7 @@ const CabinTable = () => {
     <Menus>
       <Table columns="0.6fr 2fr 1fr 1fr 1fr 8rem 1.4fr">
         <Table.Header role="row">
+      
           <div role="columnheader">Id</div>
           <div role="columnheader">Name</div>
           <div role="columnheader">Capacity</div>
