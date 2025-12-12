@@ -1,17 +1,13 @@
 import BookingRow from "./BookingRow";
 import Table from "../../ui/Table";
 import Menus from "../../ui/Menus";
-
 import ErrorFallback from "../../ui/ErrorFallback";
 import { useBookings } from "./useBookings";
-// import { CgSpin.nerAlt } from "react-icons/cg";
 import Spinner from "../../ui/Spinner";
 import Pagination from "../../ui/Pagination";
 
 function BookingTable() {
-  const { isLoading, AllBookings, error, count } = useBookings();
-  const check = Boolean(count);
-  // console.log("Bookings Dat/a HELLO", AllBookings?AllBookings[1]:AllBookings);
+  const { isLoading,  results, count , error } = useBookings();
 
   if (isLoading) return <Spinner />;
   if (error)
@@ -20,12 +16,11 @@ function BookingTable() {
         <p>Failed to Load All Bookings</p>
       </ErrorFallback>
     );
-
-  console.log(AllBookings);
-
+ 
+  console.log(results)
   return (
     <Menus>
-      <Table columns="0.6fr 2fr 2.4fr 1.4fr 1fr 3.2rem 3.4rem 2rem">
+      <Table columns="0.6fr 2fr 2.4fr 1.4fr 1fr 4.2rem 3.4rem 2rem">
         <Table.Header>
           <div>Cabin</div>
           <div>Guest</div>
@@ -37,12 +32,15 @@ function BookingTable() {
         </Table.Header>
 
         <Table.Body
-          data={AllBookings || []}
+          data={results}
           render={(booking) => (
             <BookingRow key={booking.id} booking={booking} />
           )}
         />
-        <Table.Footer>{check ? <Pagination count={count} /> : ""}</Table.Footer>
+
+        <Table.Footer>
+          {count > 0 && <Pagination count={count} />}
+        </Table.Footer>
       </Table>
     </Menus>
   );

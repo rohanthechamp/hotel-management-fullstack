@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getAllBookings } from "../../services/apiBookings";
+import { getBookings } from "../../services/apiBookings";
 import { useSearchParams } from "react-router-dom";
 import { PAGE_SIZE } from "../../utils/constant";
 
@@ -14,20 +14,20 @@ export const useBookings = () => {
     const pageValue = searchParams.get("page"); // e.g. "startDate-desc"
     // --- normalize pageValue to number (default 1)
     // const pageValue = Number(pageParam) || 1; // now a number
-    console.log('page value and its type',pageValue,typeof(pageValue))
-    // parse sortValue into field + direction safely
-    let sortBy = null;
-    if (sortValue && sortValue !== "all") {
-        const [field, direction] = sortValue.split("-");
-        if (field && (direction === "asc" || direction === "desc")) {
-            sortBy = { field, direction };
-        }
-    }
+    // console.log('page value and its type', pageValue, typeof (pageValue))
+    // // parse sortValue into field + direction safely
+    // let sortBy = null;
+    // if (sortValue && sortValue !== "all") {
+    //     const [field, direction] = sortValue.split("-");
+    //     if (field && (direction === "asc" || direction === "desc")) {
+    //         sortBy = { field, direction };
+    //     }
+    // }
 
-    const filter =
-        !filterValue || filterValue === "all"
-            ? null
-            : { field: "status", value: filterValue };
+    // const filter =
+    //     !filterValue || filterValue === "all"
+    //         ? null
+    //         : { field: "status", value: filterValue };
 
     const queryKey = [
         "AllBookings",
@@ -41,29 +41,35 @@ export const useBookings = () => {
     const { data, isLoading, error } = useQuery({
         queryKey,
         queryFn: () =>
-            getAllBookings({
-                filter,
-                sortBy,
-                pageValue,
+            getBookings({
+                sortValue, filterValue, pageValue
             }),
-        // optional: staleTime, keepPreviousData etc.
+        // optional: staleTime, keepPreviousData etc
+        keepPreviousData: true,
     });
 
     // normalize so components can use them without checks
-    const AllBookings = data?.data ?? [];
-    const count = data?.count ?? 0;
+    // const AllBookings = data?.data ?? [];
+    // const count = results?.count ?? 0;
 
-    // PreFetching
+    // PreFetching just for tanstack caching
+
+    console.log('In useBookings - ', data?.results)
+    const results = data?.results || {}
+    const count = data?.count
+
 
     const pageCount = Math.ceil(count / PAGE_SIZE);
     if (pageValue < pageCount)
         queryClient.prefetchQuery({
             queryKey: ["AllBookings", filterValue ?? "all", sortValue ?? "all", pageValue + 1],
             queryFn: () =>
-                getAllBookings({
-                    filter: filterValue,
-                    sortBy: sortValue,
+                getBookings({
+
+                    sortValue: sortValue,
+                    filterValue: filterValue,
                     pageValue: pageValue + 1,
+
                 }),
         });
 
@@ -71,16 +77,14 @@ export const useBookings = () => {
         queryClient.prefetchQuery({
             queryKey: ["AllBookings", filterValue ?? "all", sortValue ?? "all", pageValue - 1],
             queryFn: () =>
-                getAllBookings({
-                    filter: filterValue,
-                    sortBy: sortValue,
+                getBookings({
+                    sortValue: sortValue,
+                    filterValue: filterValue,
                     pageValue: pageValue - 1,
                 }),
         });
 
-    // queryKey.map((val) => {
-    //     console.log(val);
-    // });
 
-    return { isLoading, error, AllBookings, count };
+    return { isLoading, error, results, count };
+
 };

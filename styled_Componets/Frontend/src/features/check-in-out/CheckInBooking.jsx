@@ -91,7 +91,7 @@ function CheckInBooking({ data, onCheckIn, isLoading }) {
 
   const stablebreakFastPrice = useMemo(() => {
     // Only calculate when user has NOT added breakfast yet
-    if (!data?.hasBreakfast) {
+    if (!data?.extrasPrice) {
       const value =
         (data?.numNights ?? 0) *
         (data?.numGuests ?? 0) *
@@ -102,7 +102,7 @@ function CheckInBooking({ data, onCheckIn, isLoading }) {
     // If breakfast already added, no need to calculate again
     return null;
   }, [
-    data?.hasBreakfast,
+    data?.extrasPrice,
     data?.numNights,
     data?.numGuests,
     settingsData?.breakfastPrice,
@@ -111,7 +111,7 @@ function CheckInBooking({ data, onCheckIn, isLoading }) {
     if (!data) return;
 
     setConfirmPaid(data?.isPaid ?? false);
-    setConfirmBreakfast(data?.hasBreakfast ?? false);
+    setConfirmBreakfast(data?.extrasPrice ?? false);
     // setBreakFastPrice(stablebreakFastPrice);
     if (Number.isInteger(stablebreakFastPrice))
       console.log(
@@ -163,9 +163,9 @@ function CheckInBooking({ data, onCheckIn, isLoading }) {
                   setConfirmPaid(false);
                   setConfirmBreakfast((prev) => !prev);
                   onCheckIn({
-                    columnName: ["hasBreakfast", "extrasPrice", "totalPrice"],
+                    columnName: [ "extrasPrice", "totalPrice"],
                     columnValue: [
-                      true,
+                      
                       stablebreakFastPrice,
                       data?.totalPrice + stablebreakFastPrice,
                     ],

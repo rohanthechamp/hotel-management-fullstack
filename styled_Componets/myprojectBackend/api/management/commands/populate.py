@@ -146,7 +146,7 @@ class Command(BaseCommand):
                 cabinPrice=cabin_price,
                 extrasPrice=extras_price,
                 totalPrice=total_price,
-                status=random.choice([True, False]),
+                status=random.choice(["checked-out", "checked-in", "unconfirmed"]),
                 isPaid=random.choice([True, False]),
                 observations=fake.sentence(nb_words=8),
                 cabin_id=cabin_id,

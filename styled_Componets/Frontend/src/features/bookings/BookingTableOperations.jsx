@@ -1,4 +1,3 @@
-
 // import Filter from "../../ui/Filter";
 
 import Filter from "../../ui/Filter";
@@ -19,15 +18,11 @@ function BookingTableOperations() {
       />
 
       <Sort
-        
         options={[
-          { value: "startDate-desc", label: "Sort by date (recent first)" },
-          { value: "startDate-asc", label: "Sort by date (earlier first)" },
-          {
-            value: "totalPrice-desc",
-            label: "Sort by amount (high first)",
-          },
-          { value: "totalPrice-asc", label: "Sort by amount (low first)" },
+          { value: "dstartDate-desc", label: "Sort by date (recent first)" },
+          { value: "astartDate-asc", label: "Sort by date (earlier first)" },
+          { value: "dtotalPrice-desc", label: "Sort by amount (high first)" },
+          { value: "atotalPrice-asc", label: "Sort by amount (low first)" },
         ]}
       />
     </TableOperations>

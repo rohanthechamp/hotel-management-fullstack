@@ -73,7 +73,7 @@ class Bookings(models.Model):
     totalPrice = models.DecimalField(
         max_digits=20, decimal_places=2, blank=False, null=False
     )
-    status = models.BooleanField(blank=False, null=False)
+    status = models.CharField(blank=False, null=False)
     isPaid = models.BooleanField(blank=False, null=False)
     observations = models.TextField()
 

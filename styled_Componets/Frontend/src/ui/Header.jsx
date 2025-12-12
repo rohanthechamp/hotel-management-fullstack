@@ -11,20 +11,29 @@ const StyledHeader = styled.header`
   border-bottom: 1px solid var(--color-grey-300);
 `;
 
+
+
 const Header = () => {
   const { auth } = useContext(AuthContext);
 
-  console.log("AUTH:", auth,typeof(auth)); // inspect what it actually contains
-
   return (
     <StyledHeader>
-      Header
-      <div> {auth[0]} </div>
-      <div>{auth?.username ?? "no auth username"}</div>
-      <div>{auth?.email ?? "no auth email"}</div>
+      <p>Header</p>
+
+      {auth.isAuthAuthenticated ? (
+        <>
+          <p>You are authenticated as {auth.username}</p>
+          <p>Username: {auth.username ?? "N/A"}</p>
+          <p>Email: {auth.email ?? "N/A"}</p></>
+      ) : (
+
+        <p>You are NOT Authenticated</p>
+
+
+      )}
     </StyledHeader>
   );
 };
 
+export default Header;
 
-export default Header

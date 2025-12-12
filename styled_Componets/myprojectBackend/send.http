@@ -89,8 +89,8 @@ Content-Type: application/json
 
 {
 
-  "email": "brock@example.com",
-  "password": "9876543210wrwegw4"
+  "email": "demo@example.com",
+  "password": "demo12345"
 
 }
 
@@ -100,3 +100,14 @@ Content-Type: application/json
 GET http://127.0.0.1:8000/api/settings/
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY0NjE0MjAzLCJpYXQiOjE3NjQ2MTQwODMsImp0aSI6ImUyZTkxYWRiOTY3ODRlYWQ4Y2JkMmZlNDgxYjAwZjM5IiwidXNlcl9pZCI6IjMifQ.HVjiV9BieCEEi3t5YgIOUlOsNutHiuz7kG_Yta7XBmA
+
+
+
+####
+PATCH  http://127.0.0.1:8000/api/bookings/2/ HTTP/1.1
+Content-Type: application/json
+
+{
+    "status": "checked-out",
+    "isPaid": true
+}

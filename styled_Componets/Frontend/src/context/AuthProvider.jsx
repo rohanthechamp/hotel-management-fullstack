@@ -1,16 +1,22 @@
+// AuthContext.jsx
 import { createContext, useState, useMemo } from "react";
 
-const AuthContext = createContext({});
+const AuthContext = createContext(null);
+
+const initialState = {
+    accessToken: null,
+    refreshToken: null,
+    username: null,
+    email: null,
+    isAuthAuthenticated: false,
+};
 
 export const AuthProvider = ({ children }) => {
-    const [auth, setAuth] = useState({});
-    const value = useMemo(() => ({ auth, setAuth }), [auth, setAuth]);
+    const [auth, setAuth] = useState(initialState);
 
-    return (
-        <AuthContext.Provider value={value}>
-            {children}
-        </AuthContext.Provider>
-    )
-}
+    const value = useMemo(() => ({ auth, setAuth }), [auth]);
+
+    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
 
 export default AuthContext;

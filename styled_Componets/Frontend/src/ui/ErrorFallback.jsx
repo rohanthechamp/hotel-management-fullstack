@@ -34,7 +34,7 @@ function ErrorFallback({ children,error='' }) {
   return (
     <StyledErrorFallback>
       <Box>
-        <h1>Something went wrong- { error}</h1>
+        <h1>Something went wrong- { error.message || String(error) }</h1>
         {children}
       </Box>
     </StyledErrorFallback>

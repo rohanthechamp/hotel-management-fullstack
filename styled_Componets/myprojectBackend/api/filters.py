@@ -4,15 +4,23 @@ from rest_framework import filters
 from .models import Bookings, Cabins
 
 
-class CabinsFilter(django_filters.FilterSet):
-    class Meta:
-        model = Cabins
-        fields = {"discount": ["lt", "gt"]}
+# class CabinsFilter(django_filters.FilterSet):
+#     class Meta:
+#         model = Cabins
+#         fields = {"discount": ["lt", "gt"]}
 
     # def get_queryset(self):
     #     queryset = super(CLASS_NAME, self).get_queryset()
     #     queryset = queryset # TODO
     #     return queryset
+
+
+# class BookingFilter(django_filters.FilterSet):
+#     class Meta:
+#         model = Bookings
+#         fields = {"status": ["in"]}
+
+    
 
 
 # * fetching the payment status paid and booked in 3 days

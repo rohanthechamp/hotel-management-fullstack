@@ -3,7 +3,7 @@ import supabase, { supabaseUrl } from "./supabase";
 
 // // supabase
 
-export const getCabins = async (sortValue, filterValue) => {
+export const getCabins = async (sortValue, filterValue, pageValue=1) => {
     try {
         if (sortValue === 'all' && filterValue === 'all') {
             const { data } = await axiosPrivate.get("api/cabins/"); return data?.results || [];
@@ -15,6 +15,7 @@ export const getCabins = async (sortValue, filterValue) => {
         }
 
         if (sortValue && sortValue !== "all") {
+            let ascOrder= ['asc','min','low']
             const [field, direction] = sortValue.split("-");
             const fieldMapping = {
                 name: "name",
@@ -26,13 +27,15 @@ export const getCabins = async (sortValue, filterValue) => {
             const mappedField = fieldMapping[field];
             if (!mappedField) throw new Error("Invalid sorting field from UI");
 
-            params.ordering = direction === "asc" ? mappedField : `-${mappedField}`;
+            params.ordering = ascOrder.includes(direction) ? mappedField : `-${mappedField}`;
         }
-
+        if (pageValue && pageValue > 0) {
+            params.pagenumber = pageValue
+        }
         const { data } = await axiosPrivate.get("api/cabins/", { params });
         return data?.results ?? []; // consistent array return
     } catch (error) {
-        console.error("Error fetching cabins:", error); 
+        console.error("Error fetching cabins:", error);
         throw error; // rethrow so react-query sets error state
     }
 };

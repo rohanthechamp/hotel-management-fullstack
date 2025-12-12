@@ -12,7 +12,7 @@ import CheckOutBooking from "./CheckOutBooking";
 import CheckInBooking from "./CheckInBooking";
 import Spinner from "../../ui/Spinner";
 import ErrorFallback from "../../ui/ErrorFallback";
-import Button from "../../ui/Button";
+// import Button from "../../ui/Button";
 
 const CheckInOutBooking = () => {
   const moveBack = useMoveBack();
@@ -30,6 +30,7 @@ const CheckInOutBooking = () => {
       for (let index = 0; index < columnName.length; index++) {
         obj[columnName[index]] = columnValue[index];
       }
+      console.log(   'CheckInOutBooking - ' , obj)
 
       checkin({
         id: bookingId,

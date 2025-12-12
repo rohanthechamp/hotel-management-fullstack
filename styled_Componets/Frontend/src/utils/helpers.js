@@ -50,3 +50,18 @@ export const formDataHandel = (data) => {
 };
 
 
+
+
+export  const redirectUser = (urlKey, defaultUrl = "/home") => {
+  if (!urlKey) return
+  // After successful login:
+  const redirectUrl = localStorage.getItem(urlKey);
+
+  // Remove the stored URL from localStorage to clean up
+  localStorage.removeItem(urlKey);
+
+  // Redirect the user. Use the stored URL or a default fallback (e.g., home page)
+
+  // Use replace to prevent going back to login
+  window.location.replace(redirectUrl || defaultUrl);
+}

@@ -57,7 +57,12 @@ const useAxiosPrivate = () => {
                         localStorage.removeItem("refreshToken");
                         localStorage.removeItem("accessToken");
 
+                        localStorage.setItem('redirectAfterLogin', window.location.href);
+
+
+                      
                         window.location.href = "/login";
+                        
                         return;
                     }
                     else { // ^ Existing User - Has RefreshToken  and but  Access token can be expired 

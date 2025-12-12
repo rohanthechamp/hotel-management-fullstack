@@ -29,14 +29,14 @@ const CabinTableOperations = () => {
           { value: "name-asc", label: "Sort by Name (A-Z)" },
           { value: "name-desc", label: "Sort by Name (Z-A)" },
           { value: "regularPrice-low", label: "Sort by price (low first)" },
-          { value: "regularPrice-max", label: "Sort by price (high first)" },
+          { value: "regularPrice-high", label: "Sort by price (high first)" },
           {
-            value: "maxCapacityCabins",
-            label: "Sort by Capacity (Low)",
+            value: "maxCapacityCabins-max",
+            label: "Sort by Capacity (Max)",
           },
           {
-            value: "minCapacityCabins",
-            label: "Sort by Capacity (Max)",
+            value: "minCapacityCabins-min",
+            label: "Sort by Capacity (Min)",
           },
         ]}
       />

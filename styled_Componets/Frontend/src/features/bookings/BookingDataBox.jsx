@@ -378,6 +378,8 @@ const MetaItem = styled.div`
 `;
 
 function BookingDataBox({ booking }) {
+  if (!booking ) return <Spinner />;
+
   const {
     created_at,
     startDate,
@@ -404,7 +406,7 @@ function BookingDataBox({ booking }) {
           <HiOutlineHomeModern aria-hidden="true" />
           <div>
             <p>
-              {numNights} nights in Cabin <span>{cabins?.cabinName}</span>
+              {numNights} nights in Cabin <span>{cabins?.name}</span>
             </p>
             <div style={{ fontSize: 13, color: "#64748b", marginTop: 6 }}>
               {format(new Date(startDate), "EEE, MMM dd yyyy")} (
@@ -425,7 +427,7 @@ function BookingDataBox({ booking }) {
       <Section>
         <Guest>
           {guests?.countryFlag && (
-            <Flag src={guests?.countryFlag} alt={`Flag of ${guests?.country} `} />
+            <Flag src={guests?.countryFlag} alt={`Flag of ${guests?.nationality} `} />
           )}
 
           <p>
@@ -454,7 +456,7 @@ function BookingDataBox({ booking }) {
 
         <MetaGrid>
           <MetaItem>
-            <dt>Check-in</dt>
+            <dt>Check-inMJ</dt>
             <dd>{format(new Date(startDate), "EEE, MMM dd yyyy")}</dd>
           </MetaItem>
 
