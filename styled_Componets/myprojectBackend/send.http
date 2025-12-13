@@ -109,5 +109,5 @@ Content-Type: application/json
 
 {
     "status": "checked-out",
-    "isPaid": true
+    "isPaid": false
 }

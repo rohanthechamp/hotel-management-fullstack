@@ -152,7 +152,7 @@ class BookingsCreateListView(generics.ListCreateAPIView):
 
     def get_permissions(self):
         """Allow public GET, admin-only POST."""
-        return [AllowAny()] if self.request.method == "POST" else [IsAuthenticated()]
+        return [IsAdminUser()] if self.request.method == "POST" else [IsAuthenticated()]
 
     def get_queryset(self):
         queryset = self.queryset    
@@ -168,7 +168,7 @@ class BookingsCreateListView(generics.ListCreateAPIView):
             }
 
             value = mapping[status]
-            print(value)
+            # print(value)
             queryset = queryset.filter(status=value)
 
         return queryset

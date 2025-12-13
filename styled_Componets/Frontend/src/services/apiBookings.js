@@ -257,9 +257,14 @@ export async function getStaysTodayActivity() {
 
 export async function updateBooking(id, obj, errorMsg, successMsg) {
   console.log("printing the obj in updateBooking ", obj);
+  const { data1, data2 } = obj
+  
+  console.log(  'Destructed data- ' , data1,data2)
+
+
 
   try {
-    const res = await axiosPrivate.patch(`api/bookings/${id}/`, obj);
+    const res = await axiosPrivate.patch(`api/bookings/${id}/`, obj);   // ^  http://127.0.0.1:8000/api/bookings/2/
     console.info(`Booking updated- ${successMsg}`);
     return res.data;
   } catch (error) {
