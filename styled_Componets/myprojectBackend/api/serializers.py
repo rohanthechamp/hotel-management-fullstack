@@ -49,7 +49,7 @@ def validate_image_file(value):
     except Exception:
         raise serializers.ValidationError("Uploaded file is not a valid image.")
 
-    if img.format not in ["JPEG", "PNG"]:
+    if img.format.upper() not in ["JPEG", "PNG"]:
         raise serializers.ValidationError("Only JPEG and PNG images are allowed.")
 
     return value
@@ -69,6 +69,7 @@ class CabinSerializer(serializers.ModelSerializer):
     """
 
     # Example: enforce sane limit for maxCapacity at API layer (model already has validators)
+    # The above code is defining a variable named `maxCapacity` in Python.
     maxCapacity = serializers.IntegerField(
         required=True, validators=[validate_positive]
     )
@@ -76,6 +77,8 @@ class CabinSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cabins
         fields = "__all__"
+        read_only_fields = ("user",)
+
 
     def validate_regularPrice(self, value):
         """Make sure regular price is non-negative and reasonable."""
@@ -110,6 +113,9 @@ class CabinSerializer(serializers.ModelSerializer):
     def validate_image(self, value):
         # If file is uploaded, validate size/type
         return validate_image_file(value)
+    
+    # def save(self,validated_data):
+    #     return super().save(**kwargs)
 
 
 # -----------------------
@@ -303,7 +309,7 @@ class BookingWriteSerializer(serializers.ModelSerializer):
             if cap is not None and num_guests > cap:
                 raise serializers.ValidationError(
                     {
-                        "numGuests": f"numGuests ({num_guests}) exceeds cabin capacity ({cap})."
+                        "numGuests": f"numGuests ({num_guests}) exceeds cabin capacity ({cap}). of having guest"
                     }
                 )
 

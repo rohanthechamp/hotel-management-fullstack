@@ -124,89 +124,79 @@ function CheckInBooking({ data, onCheckIn, isLoading }) {
   if (isSettingError) return <ErrorFallback />;
 
   console.log(settingsData);
-  
-  const {
-    guests = {},
-    totalPrice,
-  } = data || {};
+
+  const { guests = {}, totalPrice } = data || {};
 
   return (
     <>
-      
-          <Box>
-            <Checkbox
-              id="confirmPaid"
-              checked={confirmPaid}
-              onChange={() => setConfirmPaid((prev) => !prev)}
-              disabled={confirmPaid || isLoading}
-            >
-              {confirmPaid ? (
-                <p>
-                  Automatically confirmed that {guests.fullName || "the Guest"}{" "}
-                  has done the payment of {totalPrice}
-                </p>
-              ) : (
-                <p>
-                  I confirm that {guests.fullName || "the Guest"} has done the
-                  payment of {totalPrice}
-                </p>
-              )}
-            </Checkbox>
-          </Box>
-
-          {!confirmBreakfast && (
-            <Box>
-              <Checkbox
-                id="confirmBreakfast"
-                checked={confirmBreakfast}
-                onChange={() => {
-                  setConfirmPaid(false);
-                  setConfirmBreakfast((prev) => !prev);
-                  onCheckIn({
-                    columnName: [ "extrasPrice", "totalPrice"],
-                    columnValue: [
-                      
-                      stablebreakFastPrice,
-                      data?.totalPrice + stablebreakFastPrice,
-                    ],
-                    errorMsg: "Failed to add breakfast for ",
-                    successMsg: "Successfully added breakfast for ",
-                  });
-                }}
-                disabled={confirmBreakfast || isLoading}
-              >
-                {stablebreakFastPrice == null ? (
-                  <p>
-                    Add breakfast for guest {guests.fullName || "the Guest"}
-                  </p>
-                ) : (
-                  <p>
-                    Add breakfast for guest {guests.fullName || "the Guest"}{" "}
-                    that has price of {stablebreakFastPrice}
-                  </p>
-                )}
-              </Checkbox>
-            </Box>
+      <Box>
+        <Checkbox
+          id="confirmPaid"
+          checked={confirmPaid}
+          onChange={() => setConfirmPaid((prev) => !prev)}
+          disabled={confirmPaid || isLoading}
+        >
+          {confirmPaid ? (
+            <p>
+              Automatically confirmed that {guests.fullName || "the Guest"} has
+              done the payment of {totalPrice}
+            </p>
+          ) : (
+            <p>
+              I confirm that {guests.fullName || "the Guest"} has done the
+              payment of {totalPrice}
+            </p>
           )}
+        </Checkbox>
+      </Box>
 
-          <ButtonGroup>
-            <CheckInButton
-              onClick={() =>
-                onCheckIn({
-                  columnName: ["status", "isPaid"],
-                  columnValue: ["checked-in", true],
-                  errorMsg: "Failed to add checked-in status for ",
-                  successMsg: "Successfully added checked-in status for ",
-                })
-              }
-              disabled={isLoading}
-            >
-              {isLoading
-                ? "Processing..."
-                : `Check in booking #${data?.id}`}
-            </CheckInButton>
-          </ButtonGroup>
+      {!confirmBreakfast && (
+        <Box>
+          <Checkbox
+            id="confirmBreakfast"
+            checked={confirmBreakfast}
+            onChange={() => {
+              setConfirmPaid(false);
+              setConfirmBreakfast((prev) => !prev);
+              onCheckIn({
+                columnName: ["extrasPrice", "totalPrice"],
+                columnValue: [
+                  stablebreakFastPrice,
+                  data?.totalPrice + stablebreakFastPrice,
+                ],
+                errorMsg: "Failed to add breakfast for ",
+                successMsg: "Successfully added breakfast for ",
+              });
+            }}
+            disabled={confirmBreakfast || isLoading}
+          >
+            {stablebreakFastPrice == null ? (
+              <p>Add breakfast for guest {guests.fullName || "the Guest"}</p>
+            ) : (
+              <p>
+                Added breakfast for guest {guests.fullName || "the Guest"} that
+                has price of {stablebreakFastPrice}
+              </p>
+            )}
+          </Checkbox>
+        </Box>
+      )}
 
+      <ButtonGroup>
+        <CheckInButton
+          onClick={() =>
+            onCheckIn({
+              columnName: ["status", "isPaid"],
+              columnValue: ["checked-in", true],
+              errorMsg: "Failed to add checked-in status for ",
+              successMsg: "Successfully added checked-in status for ",
+            })
+          }
+          disabled={isLoading}
+        >
+          {isLoading ? "Processing..." : `Check in booking #${data?.id}`}
+        </CheckInButton>
+      </ButtonGroup>
     </>
   );
 }

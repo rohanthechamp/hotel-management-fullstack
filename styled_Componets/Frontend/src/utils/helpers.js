@@ -52,7 +52,7 @@ export const formDataHandel = (data) => {
 
 
 
-export  const redirectUser = (urlKey, defaultUrl = "/home") => {
+export  const redirectUser = (urlKey, defaultUrl = "/") => {
   if (!urlKey) return
   // After successful login:
   const redirectUrl = localStorage.getItem(urlKey);

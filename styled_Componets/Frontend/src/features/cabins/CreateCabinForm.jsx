@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import styled from "styled-components";
 import Input from "../../ui/Input";
 import Form from "../../ui/Form";
 import Button from "../../ui/Button";
 import FileInput from "../../ui/FileInput";
-import Textarea from "../../ui/Textarea";
+import Textarea, { ImageInput, ImagePreview } from "../../ui/Textarea";
 import { useForm } from "react-hook-form";
 import Spinner from "../../ui/Spinner";
 import { useCreateCabin } from "./useCreateCabin";
@@ -42,21 +42,26 @@ const ErrorStyle = styled.span`
 `;
 
 function CreateCabinForm({ cabinData = {}, resetOpenModel }) {
-  console.log(cabinData);
-  const [isSubmit, setIsSubmit] = useState(false);
-
+  // console.log("Cabin data in cabin form - ", cabinData, typeof cabinData);
+  // const [isSubmit, setIsSubmit] = useState(false);
+  const [preview, setPreview] = useState(null);
   const { id: EditId, ...otherData } = cabinData;
-  console.log("OTHERDATA", otherData);
+  // console.log("OTHERDATA", otherData);
 
   const isEditId = Boolean(EditId);
 
-  if (isEditId) console.log("data in edit form", EditId);
+  useEffect(() => {
+    if (isEditId) {
+      setPreview(cabinData?.image);
+    }
+  }, [isEditId, cabinData]);
+
+  // if (isEditId) console.log("data in edit form", EditId);
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
-
   } = useForm({ defaultValues: isEditId ? otherData : {} });
 
   /// create cabin logic
@@ -64,29 +69,62 @@ function CreateCabinForm({ cabinData = {}, resetOpenModel }) {
   /// Edit cabin logic
   const { isEditing, updateMutate } = useEditCabin();
   const isWorking = isEditing || isCreating;
+  const imageRegister = register("image", {
+    required: !isEditId && "This field is required",
+  });
 
+  function handleImageChange(e) {
+    console.log('running handleImageChange after selecting the image ')
+    const file = e.target.files[0];
+    console.log('here is the image -',file)
+    if (!file) return console.log("NOT a file!");
+    const fileURL = URL.createObjectURL(file);
+    console.log('here is the image url -', fileURL)
+    setPreview(fileURL);
+    console.log('here image is set')
+  }
   const onSubmit = (data) => {
     // choose file if selected, else keep existing DB url (otherData.image)
-    const fileSelected = data.image && data.image.length > 0;
-    const imageToSend = fileSelected ? data.image[0] : otherData.image;
+    // setIsSubmit(true);
 
-    const payload = { ...data, image: imageToSend };
-    const formData = new FormData();
+    console.log('Create Cabin DAta -',data)
+    // const fileSelected = data.image && data.image.length > 0;
+    // const imageToSend = fileSelected ? data.image[0] : otherData.image;
+
+    // const payload = { ...data, image: imageToSend };
+    const newCabinformData = new FormData();
 
     // Append all fields
     for (const key in data) {
       if (key === "image") {
         // Only append image if file is selected
         if (data[key] && data[key].length > 0) {
-          formData.append("image", data[key][0]); // File object
+          newCabinformData.append("image", data[key][0]); // File object
+          console.log(data[key][0]);
         }
       } else {
-        formData.append(key, data[key]); // Normal fields
+        newCabinformData.append(key, data[key]); // Normal fields
       }
     }
+
+    console.log('FormData- ', newCabinformData)
+
+    // const formData = new FormData();
+
+    // // append normal fields
+    // formData.append("name", data.name);
+    // formData.append("maxCapacity", data.maxCapacity);
+    // formData.append("regularPrice", data.regularPrice);
+    // formData.append("discount", data.discount);
+    // formData.append("observations", data.observations);
+
+    // // append image ONLY if selected
+    // if (data.image && data.image.length > 0) {
+    //   formData.append("image", data.image[0]); // File object
+    // }
     if (isEditId) {
       updateMutate(
-        { data: payload, id: EditId },
+        { data: newCabinformData, id: EditId },
         {
           onSuccess: () => {
             reset();
@@ -95,7 +133,7 @@ function CreateCabinForm({ cabinData = {}, resetOpenModel }) {
         }
       );
     } else {
-      createCabin(formData, {
+      createCabin(newCabinformData, {
         onSuccess: () => {
           reset();
           resetOpenModel?.();
@@ -106,7 +144,7 @@ function CreateCabinForm({ cabinData = {}, resetOpenModel }) {
 
   return (
     <>
-      {isSubmit && <Spinner />}
+      {/* {isSubmit && <Spinne/>r />} */}
       <Form onSubmit={handleSubmit(onSubmit)}>
         <FormRow>
           <Label htmlFor="name">Cabin name</Label>
@@ -159,25 +197,63 @@ function CreateCabinForm({ cabinData = {}, resetOpenModel }) {
         </FormRow>
 
         <FormRow>
-          <Label htmlFor="description">Description for website</Label>
+          <Label htmlFor="observations">Description for website</Label>
           <Textarea
-            id="description"
+            id="observations"
             defaultValue=""
-            {...register("description", {
+            {...register("observations", {
               required: "Description is required",
             })}
-            aria-invalid={errors.description ? true : false}
+            aria-invalid={errors.observations ? true : false}
             disabled={isWorking}
           />
-          {errors.description && (
-            <ErrorStyle>{errors.description.message}</ErrorStyle>
+          {errors.observations && (
+            <ErrorStyle>{errors.observations.message}</ErrorStyle>
           )}
         </FormRow>
-
+        {/* 
         <FormRow>
+          <Label htmlFor="image">Cabin image </Label>
+          <ImageInput
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            disabled={isWorking}
+          />
+
+          {preview && (
+            <ImagePreview>
+              <img src={preview} alt="Preview" />
+            </ImagePreview>
+          )}
+          {errors.observations && (
+            <ErrorStyle>{errors.observations.message}</ErrorStyle>
+          )}
+        </FormRow> */}
+
+        {/* <FormRow>
           <Label htmlFor="image">Cabin photo</Label>
           <FileInput id="image" accept="image/*" {...register("image")} />
+        </FormRow> */}
+
+        
+        <ImagePreview>
+          {preview && <img src={preview} alt="Preview" />}
+        </ImagePreview>
+
+        <FormRow label="Cabin photo">
+          <FileInput
+            id="image"
+            accept="image/*"
+            {...imageRegister}
+           
+            onChange={(e) => {
+              imageRegister.onChange(e); // RHF update
+              handleImageChange(e);      // preview logic
+            }}
+          />
         </FormRow>
+        {/* } */}
 
         <FormRow>
           <Button

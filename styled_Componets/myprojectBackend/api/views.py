@@ -1,11 +1,11 @@
 import stat
 from warnings import filters
 from rest_framework import generics, filters
-from rest_framework.permissions import IsAdminUser, IsAuthenticated,AllowAny
+from rest_framework.permissions import IsAdminUser, IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from django_filters.rest_framework import DjangoFilterBackend
-from api.filters import  PaidBookings, RecentPaidBookings
+from api.filters import PaidBookings, RecentPaidBookings
 from api.pagination import CustomPagination
 from .models import Cabins, Guests, Bookings, Settings
 from .serializers import (
@@ -42,6 +42,9 @@ class CabinCreateListView(generics.ListCreateAPIView):
     # ordering = ["id"]  # &default ordering when the data loads
     pagination_class = CustomPagination
 
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
     def get_queryset(self):
         queryset = Cabins.objects.all()
 
@@ -56,13 +59,13 @@ class CabinCreateListView(generics.ListCreateAPIView):
 
         return queryset
 
-    def get_permissions(self):
-        """Allow Authenticate GET, admin-only POST."PUT", "PATCH", "DELETE"]"""
-        return (
-            [IsAdminUser()]
-            if self.request.method in ["POST", "PUT", "PATCH", "DELETE"]
-            else [IsAuthenticated()]
-        )
+    # def get_permissions(self):
+    #     """Allow Authenticate GET, admin-only POST."PUT", "PATCH", "DELETE"]"""
+    #     return (
+    #         [IsAdminUser()]
+    #         if self.request.method in ["POST", "PUT", "PATCH", "DELETE"]
+    #         else [IsAuthenticated()]
+    # )
 
 
 class SingleCabinRetrieveView(generics.RetrieveUpdateDestroyAPIView):
@@ -76,11 +79,11 @@ class SingleCabinRetrieveView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Cabins.objects.all()
     serializer_class = CabinSerializer
 
-    def get_permissions(self):
-        """Public read, admin-only update/delete."""
-        return (
-            [IsAuthenticated()] if self.request.method in ["GET"] else [IsAdminUser()]
-        )
+    # def get_permissions(self):
+    #     """Public read, admin-only update/delete."""
+    #     return (
+    #         [IsAuthenticated()] if self.request.method in ["GET"] else [IsAdminUser()]
+    #     )
 
 
 # ----------------------------------------------------------
@@ -155,7 +158,7 @@ class BookingsCreateListView(generics.ListCreateAPIView):
         return [IsAdminUser()] if self.request.method == "POST" else [IsAuthenticated()]
 
     def get_queryset(self):
-        queryset = self.queryset    
+        queryset = self.queryset
 
         # * Filtering
         status = self.request.query_params.get("status")

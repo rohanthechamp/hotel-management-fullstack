@@ -20,9 +20,9 @@ const Header = () => {
     <StyledHeader>
       <p>Header</p>
 
-      {auth.isAuthAuthenticated ? (
+      {(auth.isAuthAuthenticated|| localStorage.getItem('username') )? (
         <>
-          <p>You are authenticated as {auth.username}</p>
+          <p>You are authenticated as {auth.username || localStorage.getItem('username') }</p>
           <p>Username: {auth.username ?? "N/A"}</p>
           <p>Email: {auth.email ?? "N/A"}</p></>
       ) : (

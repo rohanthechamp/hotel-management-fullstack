@@ -3,7 +3,7 @@ import supabase, { supabaseUrl } from "./supabase";
 
 // // supabase
 
-export const getCabins = async (sortValue, filterValue, pageValue=1) => {
+export const getCabins = async (sortValue, filterValue, pageValue = 1) => {
     try {
         if (sortValue === 'all' && filterValue === 'all') {
             const { data } = await axiosPrivate.get("api/cabins/"); return data?.results || [];
@@ -15,7 +15,7 @@ export const getCabins = async (sortValue, filterValue, pageValue=1) => {
         }
 
         if (sortValue && sortValue !== "all") {
-            let ascOrder= ['asc','min','low']
+            let ascOrder = ['asc', 'min', 'low']
             const [field, direction] = sortValue.split("-");
             const fieldMapping = {
                 name: "name",
@@ -44,6 +44,79 @@ export async function getCabin(id) {
     const res = await axiosPrivate.get(`api/cabins/${id}/`);
     return res.data;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// * Edit Cabin Api function
+export const editCabins = async (data, id) => {
+    
+    const res = await axiosPrivate.patch(`api/cabins/${id}/`, data)
+    return res.data;
+}
+
+
+
+// * Update Cabin Api function
+export const updateCabins = async (data, id) => {
+    const res = await axiosPrivate.put(`api/cabins/${id}/`, data)
+    return res.data;
+}
+
+// // * Create Cabin Api function
+// export const createCabins = async (data) => {
+//     const res = await axiosPrivate.post(`api/cabins/`, data, headers: {
+//         "Content-Type": "multipart/form-data",
+//     },)
+//     return res.data;
+// }
+
+
+
+export const createCabins = async (data) => {
+    const res = await axiosPrivate.post("api/cabins/", data, {
+        headers: {
+            "Content-Type": "multipart/form-data",
+        },
+    });
+    return res.data;
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

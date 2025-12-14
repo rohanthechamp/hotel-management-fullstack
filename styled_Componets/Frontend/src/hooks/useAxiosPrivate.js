@@ -45,12 +45,20 @@ const useAxiosPrivate = () => {
                     prevRequest.sent = true;
                     console.log('responseIntercept interceptors is running')
 
-                    if (!localStorage.getItem('refreshToken')) { // ^ A New User - NOT AccessToken/RefreshToken
-                        toast.error('You Must be Logged in to continue')
-                        window.location.href = '/login'
-                        return
+                    // if (!localStorage.getItem('refreshToken')) { // ^ A New User - NOT AccessToken/RefreshToken    cookieStore.get('refresh_token')
+                    //     toast.error('You Must be Logged in to continue')
+                    //     window.location.href = '/login'
+                    //     return
 
-                    }
+                    // }
+                //  const cookie   =await cookieStore.get('refresh_token')
+                    // if ( ) { // ^ A New User - NOT AccessToken/RefreshToken    cookieStore.get('refresh_token')
+                    //     toast.error('You Must be Logged in to continue')
+                    //     window.location.href = '/login'
+                    //     return
+
+                    // }
+
                     // refresh endpoint failed
                     if (error.config.url.includes("/token/refresh")) { // ^ Existing User - Has RefreshToken and that  Can be Expired
                         toast.error("Session expired. Please log in again.");
@@ -60,9 +68,9 @@ const useAxiosPrivate = () => {
                         localStorage.setItem('redirectAfterLogin', window.location.href);
 
 
-                      
+
                         window.location.href = "/login";
-                        
+
                         return;
                     }
                     else { // ^ Existing User - Has RefreshToken  and but  Access token can be expired 

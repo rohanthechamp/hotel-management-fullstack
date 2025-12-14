@@ -1,3 +1,4 @@
+
 import styled from "styled-components";
 
 const Textarea = styled.textarea`
@@ -10,4 +11,27 @@ const Textarea = styled.textarea`
   height: 8rem;
 `;
 
-export default Textarea;
+export const ImageInput = styled.input`
+  margin-top: 0.8rem;
+`;
+
+export const ImagePreview = styled.div`
+  margin-top: 1rem;
+  width: 100%;
+  height: 120px;
+  border: 1px dashed var(--color-grey-400);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-grey-50);
+
+  img {
+    max-height: 100%;
+    max-width: 100%;
+    object-fit: cover;
+    border-radius: 4px;
+  }
+`;
+
+export default Textarea

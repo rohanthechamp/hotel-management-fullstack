@@ -9,7 +9,9 @@ class Cabins(models.Model):
     user = models.ForeignKey(
         to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="cabins"
     )
-    created_at = models.DateField(default=datetime.today, db_index=True)
+    # created_at = models.DateField(default=datetime.today, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
     name = models.TextField()
     maxCapacity = models.IntegerField(
         blank=False, null=False, validators=[MinValueValidator(1), MaxValueValidator(2)]
@@ -33,7 +35,7 @@ class Cabins(models.Model):
 
 
 class Guests(models.Model):
-    created_at = models.DateField(default=datetime.today, db_index=True)
+    created_at = models.DateField(auto_now_add=True, db_index=True)
     fullName = models.TextField(db_index=True, blank=False, null=False)
     email = models.EmailField(blank=False, null=False, db_index=True)
     nationalID = models.BigIntegerField(blank=False, null=False, db_index=True)
@@ -55,8 +57,8 @@ class Bookings(models.Model):
     user = models.ForeignKey(
         to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="booking"
     )
-    created_at = models.DateField(default=datetime.today, db_index=True)
-    startDate = models.DateField(default=datetime.today, db_index=True)
+    created_at = models.DateField(auto_now_add=True, db_index=True)
+    startDate = models.DateField(auto_now_add=True, db_index=True)
     endDate = models.DateField(db_index=True)
     numNights = models.IntegerField(
         blank=False, null=False, validators=[MinValueValidator(1), MaxValueValidator(7)]
@@ -95,7 +97,7 @@ class Bookings(models.Model):
 
 
 class Settings(models.Model):
-    created_at = models.DateField(default=datetime.today, db_index=True)
+    created_at = models.DateField(auto_now_add=True, db_index=True)
     minBookingLength = models.IntegerField(blank=False, null=False)
     maxBookingLength = models.IntegerField(blank=False, null=False)
     minGuestsPerBooking = models.IntegerField(blank=False, null=False)
@@ -105,3 +107,7 @@ class Settings(models.Model):
 
     def __str__(self):
         return "Settings for HOTEL"
+# Bookings.objects.delete()
+# Bookings.objects.all().count()
+# print(Bookings.objects.all().count())
+# Bookings.objects.all().delete()

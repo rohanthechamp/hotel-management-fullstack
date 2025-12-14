@@ -98,6 +98,7 @@ class Command(BaseCommand):
                 regularPrice=regular_price,
                 discount=discount,
                 observations=fake.sentence(nb_words=6),
+                # image= ,
             )
             cabin_objs.append(c)
             if len(cabin_objs) >= chunk_size:
@@ -109,6 +110,9 @@ class Command(BaseCommand):
             Cabins.objects.bulk_create(cabin_objs)
             created_cabins += len(cabin_objs)
         cabin_ids = list(Cabins.objects.values_list("id", flat=True))
+        cabin_map = Cabins.objects.in_bulk(cabin_ids)
+
+        # cabin_max_capacity = list(Cabins.objects.values_list("maxCapacity", flat=True))
         self.stdout.write(self.style.SUCCESS(f"Total cabins created: {created_cabins}"))
 
         # Bookings (chunked) — reference by IDs for speed
@@ -128,9 +132,12 @@ class Command(BaseCommand):
                 # convert model instances to price map
                 cabin_price_map = {k: v.regularPrice for k, v in cabin_price_map.items()}
 
-            num_nights = random.randint(1, 7)
-            num_guests = random.randint(1, min(4, 2))  # adjust according to your model's maxCapacity
+            # adjust according to your model's maxCapacity
             cabin_price = cabin_price_map.get(cabin_id, Decimal("100.00"))
+            num_nights = random.randint(1, 7)
+            cabin = cabin_map[cabin_id]
+            num_guests = random.randint(1, cabin.maxCapacity)
+            
             extras_price = Decimal(str(round(random.uniform(0, 100), 2))) if random.random() < 0.4 else Decimal("0.00")
             total_price = (Decimal(num_nights) * cabin_price) + extras_price
             start = date.today() + timedelta(days=random.randint(0, 30))
@@ -165,3 +172,7 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS(f"Total bookings created: {created_bookings}"))
         self.stdout.write(self.style.SUCCESS("Demo population complete."))
+
+
+
+# python manage.py populate --cabins 100 --guests 500 --bookings 1000 --chunk 50

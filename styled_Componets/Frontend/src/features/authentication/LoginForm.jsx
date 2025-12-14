@@ -38,32 +38,36 @@ function LoginForm() {
       const res = await axiosClient.post("users/login/", data);
 
 
-      redirectUser('redirectAfterLogin')
- 
+
       const responseData = res?.data || {};
 
       console.log("RES DATA- ", res.data);
 
       const accessToken = responseData.access;
       const refreshToken = responseData.refresh;
-      // const username = responseData.username;
-      // const email = responseData.email;
+      const username = responseData.username;
+      const email = responseData.email;
       // const message = responseData.message || ''
+      console.log(accessToken,refreshToken,username,email)
 
       localStorage.setItem("refreshToken", refreshToken);
       localStorage.setItem("accessToken", accessToken);
-
+      localStorage.setItem("username",username);
       // update context with full minimal slice
-   
-      setAuth(prev => ({
-        ...prev,
+
+      setAuth({
+        accessToken: accessToken,
+        refreshToken: refreshToken,
         isAuthAuthenticated: true,
-        username: res.username
-      }))
+        email: email,
+        username: username
+      })
 
 
 
       toast.success(responseData.message || "Logged in successfully");
+
+      redirectUser('redirectAfterLogin')
     } catch (error) {
       const serverMessage =
         error?.response?.data?.detail ||
@@ -72,7 +76,16 @@ function LoginForm() {
 
       console.log('Error Message -', error?.response?.data?.detail);
 
-      setAuth({ user: null, accessToken: null });
+      
+      setAuth({
+        accessToken: null,
+        refreshToken: null,
+        username: null,
+        email: null,
+        isAuthAuthenticated: false,
+      });
+
+
       toast.error(String(serverMessage));
     } finally {
       reset();
@@ -117,7 +130,9 @@ function LoginForm() {
           Cancel
         </Button>
         <Button disabled={isSubmitted}>
-          {isSubmitted ? <p>Login in ...</p> : <p> Create new user</p>}
+
+          {isSubmitted ? "Logging in..." : "Login"}
+
         </Button>
       </FormRow>
     </Form>
