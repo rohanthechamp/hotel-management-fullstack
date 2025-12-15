@@ -45,18 +45,13 @@ function CreateCabinForm({ cabinData = {}, resetOpenModel }) {
   // console.log("Cabin data in cabin form - ", cabinData, typeof cabinData);
   // const [isSubmit, setIsSubmit] = useState(false);
   const [preview, setPreview] = useState(null);
-  const { id: EditId, ...otherData } = cabinData;
-  // console.log("OTHERDATA", otherData);
-
-  const isEditId = Boolean(EditId);
-
   useEffect(() => {
     if (isEditId) {
       setPreview(cabinData?.image);
     }
   }, [isEditId, cabinData]);
-
   // if (isEditId) console.log("data in edit form", EditId);
+  const { id: EditId, ...otherData } = cabinData;
   const {
     register,
     handleSubmit,
@@ -68,30 +63,34 @@ function CreateCabinForm({ cabinData = {}, resetOpenModel }) {
   const { isCreating, createCabin } = useCreateCabin();
   /// Edit cabin logic
   const { isEditing, updateMutate } = useEditCabin();
+
+  if (!cabinData) return <Spinner />;
+
+  // console.log("OTHERDATA", otherData);
+
+  const isEditId = Boolean(EditId);
+
   const isWorking = isEditing || isCreating;
   const imageRegister = register("image", {
     required: !isEditId && "This field is required",
   });
 
   function handleImageChange(e) {
-    console.log('running handleImageChange after selecting the image ')
+    console.log("running handleImageChange after selecting the image ");
     const file = e.target.files[0];
-    console.log('here is the image -',file)
+    console.log("here is the image -", file);
     if (!file) return console.log("NOT a file!");
     const fileURL = URL.createObjectURL(file);
-    console.log('here is the image url -', fileURL)
+    console.log("here is the image url -", fileURL);
     setPreview(fileURL);
-    console.log('here image is set')
+    console.log("here image is set");
   }
   const onSubmit = (data) => {
     // choose file if selected, else keep existing DB url (otherData.image)
     // setIsSubmit(true);
 
-    console.log('Create Cabin DAta -',data)
-    // const fileSelected = data.image && data.image.length > 0;
-    // const imageToSend = fileSelected ? data.image[0] : otherData.image;
+    console.log("Create Cabin DAta -", data);
 
-    // const payload = { ...data, image: imageToSend };
     const newCabinformData = new FormData();
 
     // Append all fields
@@ -107,21 +106,8 @@ function CreateCabinForm({ cabinData = {}, resetOpenModel }) {
       }
     }
 
-    console.log('FormData- ', newCabinformData)
+    console.log("FormData- ", newCabinformData);
 
-    // const formData = new FormData();
-
-    // // append normal fields
-    // formData.append("name", data.name);
-    // formData.append("maxCapacity", data.maxCapacity);
-    // formData.append("regularPrice", data.regularPrice);
-    // formData.append("discount", data.discount);
-    // formData.append("observations", data.observations);
-
-    // // append image ONLY if selected
-    // if (data.image && data.image.length > 0) {
-    //   formData.append("image", data.image[0]); // File object
-    // }
     if (isEditId) {
       updateMutate(
         { data: newCabinformData, id: EditId },
@@ -236,7 +222,6 @@ function CreateCabinForm({ cabinData = {}, resetOpenModel }) {
           <FileInput id="image" accept="image/*" {...register("image")} />
         </FormRow> */}
 
-        
         <ImagePreview>
           {preview && <img src={preview} alt="Preview" />}
         </ImagePreview>
@@ -246,11 +231,11 @@ function CreateCabinForm({ cabinData = {}, resetOpenModel }) {
             id="image"
             accept="image/*"
             {...imageRegister}
-           
             onChange={(e) => {
               imageRegister.onChange(e); // RHF update
-              handleImageChange(e);      // preview logic
+              handleImageChange(e); // preview logic
             }}
+            disabled={isWorking}
           />
         </FormRow>
         {/* } */}

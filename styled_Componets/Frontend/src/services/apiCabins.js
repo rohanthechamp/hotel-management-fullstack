@@ -1,12 +1,13 @@
 import { axiosPrivate } from "./axiosClient";
-import supabase, { supabaseUrl } from "./supabase";
+
 
 // // supabase
 
 export const getCabins = async (sortValue, filterValue, pageValue = 1) => {
     try {
-        if (sortValue === 'all' && filterValue === 'all') {
-            const { data } = await axiosPrivate.get("api/cabins/"); return data?.results || [];
+        if (sortValue === "all" && filterValue === "all") {
+            const { data } = await axiosPrivate.get("api/cabins/");
+            return data?.results || [];
         }
         const params = {};
 
@@ -15,7 +16,7 @@ export const getCabins = async (sortValue, filterValue, pageValue = 1) => {
         }
 
         if (sortValue && sortValue !== "all") {
-            let ascOrder = ['asc', 'min', 'low']
+            let ascOrder = ["asc", "min", "low"];
             const [field, direction] = sortValue.split("-");
             const fieldMapping = {
                 name: "name",
@@ -27,10 +28,12 @@ export const getCabins = async (sortValue, filterValue, pageValue = 1) => {
             const mappedField = fieldMapping[field];
             if (!mappedField) throw new Error("Invalid sorting field from UI");
 
-            params.ordering = ascOrder.includes(direction) ? mappedField : `-${mappedField}`;
+            params.ordering = ascOrder.includes(direction)
+                ? mappedField
+                : `-${mappedField}`;
         }
         if (pageValue && pageValue > 0) {
-            params.pagenumber = pageValue
+            params.pagenumber = pageValue;
         }
         const { data } = await axiosPrivate.get("api/cabins/", { params });
         return data?.results ?? []; // consistent array return
@@ -44,49 +47,6 @@ export async function getCabin(id) {
     const res = await axiosPrivate.get(`api/cabins/${id}/`);
     return res.data;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// * Edit Cabin Api function
-export const editCabins = async (data, id) => {
-    
-    const res = await axiosPrivate.patch(`api/cabins/${id}/`, data)
-    return res.data;
-}
-
-
-
-// * Update Cabin Api function
-export const updateCabins = async (data, id) => {
-    const res = await axiosPrivate.put(`api/cabins/${id}/`, data)
-    return res.data;
-}
-
-// // * Create Cabin Api function
-// export const createCabins = async (data) => {
-//     const res = await axiosPrivate.post(`api/cabins/`, data, headers: {
-//         "Content-Type": "multipart/form-data",
-//     },)
-//     return res.data;
-// }
-
-
-
 export const createCabins = async (data) => {
     const res = await axiosPrivate.post("api/cabins/", data, {
         headers: {
@@ -97,109 +57,12 @@ export const createCabins = async (data) => {
 };
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-export const createEditCabins = async (newCabinData, id) => {
-    // Defensive checks
-    if (!newCabinData) {
-        throw new Error("No cabin data provided");
-    }
-
-    // Determine image type:
-    const imageValue = newCabinData.image;
-    const isImageUrl = typeof imageValue === "string" && imageValue.startsWith?.(supabaseUrl);
-    const isFile = imageValue && typeof imageValue !== "string" && imageValue.name; // file-like
-
-    // If you require an image, uncomment this:
-    // if (!isImageUrl && !isFile) throw new Error("Image required: either upload a file or provide a stored URL");
-
-    // compute image name only if uploading a File
-    const imageName = isFile
-        ? `${Math.random().toString(36).slice(2)}-${imageValue.name}`.replaceAll("/", "")
-        : null;
-
-    const imagePath = isImageUrl
-        ? imageValue
-        : `${supabaseUrl}/storage/v1/object/public/cabin-images/${imageName}`;
-
-    try {
-        // Insert or update DB row first so we have an id to rollback if upload fails
-        let res;
-        if (!id) {
-            res = await supabase
-                .from("cabins")
-                .insert([{ ...newCabinData, image: imagePath }])
-                .select()
-                .single();
-        } else {
-            res = await supabase
-                .from("cabins")
-                .update({ ...newCabinData, image: imagePath })
-                .eq("id", id)
-                .select()
-                .single();
-        }
-
-        const { data, error } = res;
-        if (error) {
-            console.error("supabase insert/update error:", error);
-            throw new Error("Cabin could not be saved to DB");
-        }
-
-        // If image is already a hosted URL, we're done
-        if (isImageUrl) return data;
-
-        // If there's no file to upload, return — nothing more to do
-        if (!isFile) return data;
-
-        // Upload file to storage
-        const { error: storageError } = await supabase.storage
-            .from("cabin-images")
-            .upload(imageName, imageValue);
-
-        if (storageError) {
-            console.error("storage upload failed:", storageError);
-            // rollback DB row we just created/updated (for create we remove, for edit you may want to restore previous image)
-            try {
-                const dt = await deleteCabins(data.id);
-                console.log(dt)
-            } catch (rbErr) {
-                console.error("rollback failed:", rbErr);
-            }
-            throw new Error("File upload failed after saving DB row");
-        }
-
-        // success
-        return data;
-    } catch (err) {
-        console.error("createEditCabins failed:", err);
-        throw err;
-    }
+// * Edit Cabin Api function
+export const editCabins = async (data, id) => {
+    const res = await axiosPrivate.patch(`api/cabins/${id}/`, data);
+    return res.data;
 };
-// const deleteCabins = () => {
 
-// }
 export async function deleteCabins(id) {
     const res = await axiosPrivate.delete(`api/cabins/${id}/`);
     return res.data;

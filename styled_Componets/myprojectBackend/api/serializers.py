@@ -343,6 +343,8 @@ class SettingsSerializer(serializers.ModelSerializer):
     breakfastPrice = serializers.DecimalField(max_digits=20, decimal_places=2)
 
     class Meta:
+
+        
         model = Settings
         fields = "__all__"
 

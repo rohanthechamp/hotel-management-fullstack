@@ -59,13 +59,13 @@ class CabinCreateListView(generics.ListCreateAPIView):
 
         return queryset
 
-    # def get_permissions(self):
-    #     """Allow Authenticate GET, admin-only POST."PUT", "PATCH", "DELETE"]"""
-    #     return (
-    #         [IsAdminUser()]
-    #         if self.request.method in ["POST", "PUT", "PATCH", "DELETE"]
-    #         else [IsAuthenticated()]
-    # )
+    def get_permissions(self):
+        """Allow Authenticate GET, admin-only POST."PUT", "PATCH", "DELETE"]"""
+        return (
+            [IsAdminUser()]
+            if self.request.method in ["POST", "PUT", "PATCH", "DELETE"]
+            else [IsAuthenticated()]
+    )
 
 
 class SingleCabinRetrieveView(generics.RetrieveUpdateDestroyAPIView):
@@ -79,11 +79,11 @@ class SingleCabinRetrieveView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Cabins.objects.all()
     serializer_class = CabinSerializer
 
-    # def get_permissions(self):
-    #     """Public read, admin-only update/delete."""
-    #     return (
-    #         [IsAuthenticated()] if self.request.method in ["GET"] else [IsAdminUser()]
-    #     )
+    def get_permissions(self):
+        """Public read, admin-only update/delete."""
+        return (
+            [IsAuthenticated()] if self.request.method in ["GET"] else [IsAdminUser()]
+        )
 
 
 # ----------------------------------------------------------
@@ -188,9 +188,9 @@ class SingleBookingRetrieveView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Bookings.objects.select_related("cabin", "guest").all()
     serializer_class = BookingWriteSerializer
 
-    # def get_permissions(self):
-    #     """Public read, admin-only update/delete."""
-    #     return [IsAdminUser()] if self.request.method == "POST" else [IsAuthenticated()]
+    def get_permissions(self):
+        """Public read, admin-only update/delete."""
+        return [IsAdminUser()] if self.request.method == "POST" else [IsAuthenticated()]
 
 
 # ----------------------------------------------------------
@@ -205,7 +205,7 @@ class SettingsCreateListView(generics.ListCreateAPIView):
 
     """
 
-    # permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated,)
 
     queryset = Settings.objects.all()
     serializer_class = SettingsSerializer

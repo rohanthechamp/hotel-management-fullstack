@@ -52,16 +52,18 @@ export const formDataHandel = (data) => {
 
 
 
-export  const redirectUser = (urlKey, defaultUrl = "/") => {
-  if (!urlKey) return
-  // After successful login:
-  const redirectUrl = localStorage.getItem(urlKey);
+// // eslint-disable-next-line no-unused-vars
+// export const redirectUser = (urlKey, defaultUrl = "/",customUrl) => {
+//   if (!urlKey && !customUrl) return console.log('NO url KEY!')
+//   // After successful login:
+//   const redirectUrl = localStorage.getItem(urlKey);
+//   // Remove the stored URL from localStorage to clean up
+//   localStorage.removeItem(urlKey);
+//   // Redirect the user. Use the stored URL or a default fallback (e.g., home page)
 
-  // Remove the stored URL from localStorage to clean up
-  localStorage.removeItem(urlKey);
+//   // Use replace to prevent going back to login
+//   if (!redirectUrl) return console.log('No Redirect url provided')
 
-  // Redirect the user. Use the stored URL or a default fallback (e.g., home page)
+//   window.location.replace(redirectUrl || defaultUrl|| customUrl);
 
-  // Use replace to prevent going back to login
-  window.location.replace(redirectUrl || defaultUrl);
-}
+// }

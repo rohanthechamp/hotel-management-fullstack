@@ -135,6 +135,21 @@ h6 {
   overflow-wrap: break-word;
   hyphens: auto;
 }
+/* global.css */
+.react-hot-toast {
+  animation: toast-enter 0.25s ease-out;
+}
+
+@keyframes toast-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
 img {
   max-width: 100%;
@@ -143,4 +158,7 @@ img {
   filter: grayscale(var(--image-grayscale)) opacity(var(--image-opacity));
 }
 `;
+
+
+
 export default GlobalStyles

@@ -28,7 +28,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders",
     "django_filters",
-    # "rest_framework_simplejwt.token_blacklist",
+    "rest_framework_simplejwt.token_blacklist",
 ]
 
 AUTH_USER_MODEL = "users.User"
@@ -133,7 +133,7 @@ REST_FRAMEWORK = {
 
 # SIMPLE JWT CONFIG
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=10),
+    "ACCESS_TOKEN_LIFETIME": timedelta(seconds=20),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     # IMPORTANT FOR LOCALSTORAGE FLOW
     "ROTATE_REFRESH_TOKENS": False,

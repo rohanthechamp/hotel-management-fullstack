@@ -21,11 +21,11 @@ export async function updateSetting(id, payload) {
   return res.data;
 }
 
-// FULL replace (PUT)
-export async function replaceSetting(id, payload) {
-  const res = await axiosPrivate.put(`api/settings/${id}/`, payload);
-  return res.data;
-}
+// // FULL replace (PUT)
+// export async function replaceSetting(id, payload) {
+//   const res = await axiosPrivate.put(`api/settings/${id}/`, payload);
+//   return res.data;
+// }
 
 // CREATE new setting (admin only)
 export async function createSetting(payload) {

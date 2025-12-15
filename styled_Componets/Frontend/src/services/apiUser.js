@@ -1,4 +1,4 @@
-import axiosClient from "./axiosClient";
+import axiosClient, { axiosPrivate } from "./axiosClient";
 
 
 export const createUser = async (data) => {
@@ -13,22 +13,28 @@ export const createUser = async (data) => {
 
 
 
-export const logOutUser = async (accessToken) => {
+export const logOutUser = async (refreshToken) => {
 
     try {
-        // Logout call should clear refresh cookie server-side
-        const res = await axiosClient.post(
-            "users/logout/",
-            {},
-            { withCredentials: true }
-        );
-        localStorage.removeItem(accessToken);
+    
+        const res = await axiosPrivate.post("users/logout/", {
+            refreshToken,
+        });
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("username");
+        localStorage.removeItem("email");
 
         return res.data;
     } catch (error) {
         // still clear client-side state to be safe
-        localStorage.removeItem(accessToken);
-
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("username");
+        localStorage.removeItem("email");
         throw error;
     }
 };
+
+
+

@@ -21,12 +21,11 @@ const useAxiosPrivate = () => {
         );
 
         const requestIntercept = axiosPrivate.interceptors.request.use(
-
             (config) => {
                 if (!config.headers?.Authorization && token) {
                     config.headers.Authorization = `Bearer ${token}`;
                 }
-                console.log('requestIntercept interceptors is running')
+                console.log("requestIntercept interceptors is running");
 
                 return config;
             },
@@ -43,7 +42,7 @@ const useAxiosPrivate = () => {
                     !prevRequest?.sent
                 ) {
                     prevRequest.sent = true;
-                    console.log('responseIntercept interceptors is running')
+                    console.log("responseIntercept interceptors is running");
 
                     // if (!localStorage.getItem('refreshToken')) { // ^ A New User - NOT AccessToken/RefreshToken    cookieStore.get('refresh_token')
                     //     toast.error('You Must be Logged in to continue')
@@ -51,7 +50,7 @@ const useAxiosPrivate = () => {
                     //     return
 
                     // }
-                //  const cookie   =await cookieStore.get('refresh_token')
+                    //  const cookie   =await cookieStore.get('refresh_token')
                     // if ( ) { // ^ A New User - NOT AccessToken/RefreshToken    cookieStore.get('refresh_token')
                     //     toast.error('You Must be Logged in to continue')
                     //     window.location.href = '/login'
@@ -59,33 +58,32 @@ const useAxiosPrivate = () => {
 
                     // }
 
-                    // refresh endpoint failed
-                    if (error.config.url.includes("/token/refresh")) { // ^ Existing User - Has RefreshToken and that  Can be Expired
+                    // // refresh endpoint failed
+                    if (error.config.url.includes("/token/refresh")) {
+                        // ^ Existing User - Has RefreshToken and that  Can be Expired
                         toast.error("Session expired. Please log in again.");
+
                         localStorage.removeItem("refreshToken");
                         localStorage.removeItem("accessToken");
 
-                        localStorage.setItem('redirectAfterLogin', window.location.href);
-
-
+                        localStorage.setItem("redirectAfterLogin", window.location.href);
 
                         window.location.href = "/login";
 
                         return;
-                    }
-                    else { // ^ Existing User - Has RefreshToken  and but  Access token can be expired 
+                    } else {
+                        // ^ Existing User - Has RefreshToken  and but  Access token can be expired
                         try {
                             const newAccessToken = await refresh();
                             prevRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
                             return axiosPrivate(prevRequest); // * so now we have updated/ modified the request so we are sending this to back to axiosPrivate
                         } catch {
-                            toast.error("Could not refresh your session. Please login again.");
+                            toast.error(
+                                "Could not refresh your session. Please login again."
+                            );
                             window.location.href = "/login";
                         }
                     }
-
-
-
                 }
                 return Promise.reject(error);
             }
@@ -99,7 +97,6 @@ const useAxiosPrivate = () => {
 };
 
 export default useAxiosPrivate;
-
 
 /* *
 

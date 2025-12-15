@@ -125,11 +125,11 @@ class LoginUserView(APIView):
 
 
 class LogoutView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def post(self, request):
-        refreshToken = request.data.get("refresh", None)
-
+        refreshToken = request.data.get("refreshToken", None)
+        # print('USER  refresh token -',refreshToken)
         if not refreshToken:
             return Response(
                 {"error": "Refresh token missing or expired"},
