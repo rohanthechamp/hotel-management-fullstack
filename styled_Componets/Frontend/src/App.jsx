@@ -364,7 +364,11 @@ const App = () => {
 
       <BrowserRouter>
         <Routes>
-          <Route element={<AppLayout />}>
+          <Route element={
+            <ProtectedRoute>
+              <AppLayout /> 
+            </ProtectedRoute>
+          }>
             {/* public inside layout */}
             <Route path="/" element={<Account />} />
 
@@ -376,15 +380,16 @@ const App = () => {
             <Route
               path="/bookings"
               element={
-                <ProtectedRoute>
+
                   <Bookings />
-                </ProtectedRoute>
+
               }
             />
 
             <Route path="/check-in-out" element={<CheckInOut />} />
             <Route path="/bookings/:bookingId" element={<BookingDetail />} />
             <Route path="/check-in-out/:bookingId" element={<CheckInOut />} />
+            <Route path="/account" element={<Account />} />
             {/* private routes */}
           </Route>
 

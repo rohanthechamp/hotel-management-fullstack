@@ -23,6 +23,7 @@ export const getToday = function (options = {}) {
   return today.toISOString();
 };
 
+
 export const formatCurrency = (value) =>
   new Intl.NumberFormat("en", { style: "currency", currency: "USD" }).format(
     value
@@ -50,6 +51,12 @@ export const formDataHandel = (data) => {
 };
 
 
+// utils/clearStorage.js
+export const clearLocalStorage = (keysToRemove) => {
+  Object.keys(localStorage)
+    .filter(key => keysToRemove.includes(key))
+    .forEach(key => localStorage.removeItem(key));
+};
 
 
 // // eslint-disable-next-line no-unused-vars

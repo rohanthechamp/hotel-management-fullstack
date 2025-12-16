@@ -1,5 +1,5 @@
+/* eslint-disable no-useless-catch */
 import axiosClient, { axiosPrivate } from "./axiosClient";
-
 
 export const createUser = async (data) => {
     try {
@@ -11,30 +11,24 @@ export const createUser = async (data) => {
     }
 };
 
-
-
-export const logOutUser = async (refreshToken) => {
-
+export const logInUser = async (formData) => {
     try {
-    
-        const res = await axiosPrivate.post("users/logout/", {
-            refreshToken,
-        });
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("username");
-        localStorage.removeItem("email");
-
-        return res.data;
+        const { data } = await axiosClient.post("users/login/", formData);
+        return data;
     } catch (error) {
-        // still clear client-side state to be safe
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("username");
-        localStorage.removeItem("email");
-        throw error;
+        // Keep the error consistent for the hook
+        throw error?.response?.data || new Error("Login failed");
     }
 };
 
+export const logOutUser = async (refreshToken) => {
+    try {
+        const res = await axiosPrivate.post("users/logout/", {
+            refreshToken,
+        });
 
-
+        return res.data;
+    } catch (error) {
+        throw error;
+    }
+};

@@ -16,7 +16,7 @@ function BookingTable() {
         <p>Failed to Load All Bookings</p>
       </ErrorFallback>
     );
- 
+
   console.log(results)
   return (
     <Menus>
