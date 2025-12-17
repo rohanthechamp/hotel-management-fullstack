@@ -15,7 +15,7 @@ const HeaderMenu = () => {
     return (
         <StyleHeaderMenu>
             <li>
-                <ButtonIcon onClick={() => navigate("/login")}>
+                <ButtonIcon onClick={() => navigate("/account")}>
                     <HiOutlineUser />
                 </ButtonIcon>
             </li>

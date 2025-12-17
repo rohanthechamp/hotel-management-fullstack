@@ -55,7 +55,6 @@ def validate_image_file(value):
     return value
 
 
-
 # -----------------------
 # Cabin Serializer
 # -----------------------

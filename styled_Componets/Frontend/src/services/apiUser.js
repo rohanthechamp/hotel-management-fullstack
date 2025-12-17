@@ -21,6 +21,19 @@ export const logInUser = async (formData) => {
     }
 };
 
+
+export const getCurrentUser = async () => {
+    try {
+        const { data } = await axiosClient.post("users/user/me",);
+        console.log(data)
+        return data;
+    } catch (error) {
+        // Keep the error consistent for the hook
+        throw error?.response?.data || new Error("Getting current user details Fails");
+    }
+};
+
+
 export const logOutUser = async (refreshToken) => {
     try {
         const res = await axiosPrivate.post("users/logout/", {
@@ -29,6 +42,7 @@ export const logOutUser = async (refreshToken) => {
 
         return res.data;
     } catch (error) {
-        throw error;
+        // Keep the error consistent for the hook
+        throw error?.response?.data || new Error("Log Out ailed");
     }
 };

@@ -21,7 +21,11 @@ function LoginForm() {
 
   const onSubmit = (formData) => {
     if (localStorage.getItem("refreshToken")) {
-      return toast.success("You are already logged in");
+      toast.success("You are already logged in Navigating to Home PAge ...");
+      setTimeout(() => {
+        navigate("/");
+      }, 2000);
+      return
     }
 
     doLogin(formData, {

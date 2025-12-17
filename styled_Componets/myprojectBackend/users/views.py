@@ -1,8 +1,10 @@
 from django.shortcuts import render
+from requests import get
 
 from api import serializers
 from .serializers import (
     UserLoginSerializer,
+    UserMeSerializer,
     UserRegisterSerializer,
 )
 from rest_framework import status
@@ -152,3 +154,14 @@ class LogoutView(APIView):
         )
 
         return response
+
+
+class GetCurrentDetails(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # current_user_details=User.objects.filter(id=request.user.id)
+        # # serializer = UserMeSerializer(current_user_details)
+
+        serializer = UserMeSerializer(request.user)
+        return Response(serializer.data)

@@ -1,33 +1,29 @@
 
-import Button from "@mui/material/Button";
+
 import useLogOut from "./useLogOut";
 import useAuth from "../../hooks/useAuth";
+import ButtonIcon from "../../ui/ButtonIcon";
+
+import { HiArrowRightOnRectangle } from "react-icons/hi2";
+import SpinnerMini from "../../ui/SpinnerMini";
 
 const LogOut = () => {
 
     const { auth } = useAuth()
     const { isLoading, doLogOut } = useLogOut()
 
-    function handleSubmit() {
-        const rf = auth?.refreshToken
-        console.log('rf', rf)
-        if (!rf) return console.log("RefreshToken is NOT available");
-
-        doLogOut({ refreshToken: rf });
-
-    }
 
 
     return (
-        <Button
+        <ButtonIcon
             variant="contained"
             size="large"
             color="warning"
-            onClick={handleSubmit}
+            onClick={() => doLogOut({ refreshToken: auth?.refreshToken })}
             disabled={isLoading}
         >
-            {isLoading ? <p>...</p> : <p>LogOut</p>}
-        </Button>
+            {isLoading ? <SpinnerMini/> : <HiArrowRightOnRectangle/>}
+        </ButtonIcon>
     );
 };
 

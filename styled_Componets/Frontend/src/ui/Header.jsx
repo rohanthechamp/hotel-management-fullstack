@@ -60,9 +60,6 @@
 //           {refreshToken && (
 //             <LogOut userRefreshToken={refreshToken} />
 
-
-
-
 //           )}
 //         </>
 //       ) : (
@@ -78,20 +75,24 @@
 
 // export default Header;
 
-
 import styled from "styled-components";
 import HeaderMenu from "./HeaderMenu";
+import UserAvatar from "../features/authentication/UserAvatar";
 
 const StyledHeader = styled.header`
   background-color: var(--color-grey-0);
+  /* background-color: #c33636; */
   padding: 1.2rem 4.8rem;
   border-bottom: 1px solid var(--color-grey-100);
 `;
 
 function Header() {
-  return <StyledHeader>
-    <HeaderMenu/>
-  </StyledHeader>;
+  return (
+    <StyledHeader>
+      <UserAvatar/>
+      <HeaderMenu />
+    </StyledHeader>
+  );
 }
 
 export default Header;
