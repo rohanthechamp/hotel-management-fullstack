@@ -9,6 +9,7 @@ import { useForm } from "react-hook-form";
 import Spinner from "../../ui/Spinner";
 import { useCreateCabin } from "./useCreateCabin";
 import { useEditCabin } from "./useEditCabin";
+import { formDataHandel } from "../../utils/helpers";
 const FormRow = styled.div`
   display: grid;
   align-items: center;
@@ -91,22 +92,7 @@ function CreateCabinForm({ cabinData = {}, resetOpenModel }) {
 
     console.log("Create Cabin DAta -", data);
 
-    const newCabinformData = new FormData();
-
-    // Append all fields
-    for (const key in data) {
-      if (key === "image") {
-        // Only append image if file is selected
-        if (data[key] && data[key].length > 0) {
-          newCabinformData.append("image", data[key][0]); // File object
-          console.log(data[key][0]);
-        }
-      } else {
-        newCabinformData.append(key, data[key]); // Normal fields
-      }
-    }
-
-    console.log("FormData- ", newCabinformData);
+    const newCabinformData = formDataHandel(data);
 
     if (isEditId) {
       updateMutate(

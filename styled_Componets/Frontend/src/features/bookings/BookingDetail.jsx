@@ -32,6 +32,7 @@ function BookingDetail() {
   const navigate = useNavigate();
   const moveBack = useMoveBack();
   console.log(`Single Booking data= ${data} for id ${bookingId}`);
+  console.log('Single Booking data=', data)
   if (isLoading) return <TbTruckLoading />;
   if (error) return <BiErrorCircle />;
   const { status } = data;

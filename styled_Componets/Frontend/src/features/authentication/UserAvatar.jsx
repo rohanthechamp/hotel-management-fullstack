@@ -1,6 +1,6 @@
 import styled from "styled-components";
 import { useCurrentUser } from "./useCurrentUser";
-import { Backdrop, CircularProgress } from "@mui/material";
+import { Alert, Backdrop, CircularProgress, LinearProgress } from "@mui/material";
 const StyledUserAvatar = styled.div`
   display: flex;
   gap: 1.2rem;
@@ -22,24 +22,36 @@ const Avatar = styled.img`
 `;
 
 // import React from 'react'/
-
+const BACKEND_URL = "http://127.0.0.1:8000";
 const UserAvatar = () => {
   const { isLoading, UserData, error } = useCurrentUser();
-
+  
   if (error)
-    return <Alert severity="error">Failed to load data. Please refresh.</Alert>;
+    return <Alert severity="error">Failed to load data. Please refresh.</ Alert>;
 
   if (isLoading)
     return (
-      <Backdrop open={true} sx={{ color: "#bcb60f", zIndex: 1300 }}>
+      <LinearProgress open={true} sx={{ color: "#bcb60f", zIndex: 1300 }}>
         <CircularProgress color="inherit" />
-      </Backdrop>
+      </LinearProgress>
     );
+  console.log('User Phot0', UserData?.photo)
+
 
   return (
     <StyledUserAvatar>
-      {UserData?.name}
-      {UserData?.email}
+      <Avatar
+        src={
+          UserData?.photo
+            ? `${BACKEND_URL}${UserData.photo}`
+            : "/src/data/img/default-user2.png"
+        }
+        alt={`Avatar of ${UserData?.name || "Unknown"}`}
+      />
+
+      <span>
+        Hi ✋ {UserData?.name}
+      </span>
     </StyledUserAvatar>
   );
 };

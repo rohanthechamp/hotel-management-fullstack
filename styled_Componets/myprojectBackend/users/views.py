@@ -1,8 +1,11 @@
+from functools import partial
 from django.shortcuts import render
 from requests import get
 
 from api import serializers
 from .serializers import (
+    UpdateCurrentUserSerializer,
+    UpdateUserPassword,
     UserLoginSerializer,
     UserMeSerializer,
     UserRegisterSerializer,
@@ -160,8 +163,51 @@ class GetCurrentDetails(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # current_user_details=User.objects.filter(id=request.user.id)
-        # # serializer = UserMeSerializer(current_user_details)
 
         serializer = UserMeSerializer(request.user)
         return Response(serializer.data)
+
+
+class UpdateCurrentUserView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request):
+        # print("User data", request.Files)
+        serializer = UpdateCurrentUserSerializer(
+            instance=request.user,
+            data=request.data,
+            partial=True,
+        )
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {"message": "User Updated successfully."},
+                status=status.HTTP_200_OK,
+            )
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+
+class UpdateCurrentUserPasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request):
+        serializer = UpdateUserPassword(
+            instance=request.user,
+            data=request.data,
+            partial=True,
+        )
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {"message": "User Password Updated successfully."},
+                status=status.HTTP_200_OK,
+            )
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST,
+        )

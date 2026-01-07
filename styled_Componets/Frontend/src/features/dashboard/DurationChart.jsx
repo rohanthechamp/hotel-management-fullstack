@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { PieChart, Pie, Tooltip, Cell, Legend } from "recharts";
 
 const ChartBox = styled.div`
   /* Box */
@@ -6,7 +7,8 @@ const ChartBox = styled.div`
   border: 1px solid var(--color-grey-100);
   border-radius: var(--border-radius-md);
 
-  padding: 2.4rem 3.2rem;
+
+  padding: 3.4rem 4.4rem;
   grid-column: 3 / span 2;
 
   & > *:first-child {
@@ -104,29 +106,65 @@ const startDataDark = [
   },
 ];
 
-function prepareData(startData, stays) {
-  // A bit ugly code, but sometimes this is what it takes when working with real data 😅
+const stayDurationColorByLabel = {
+  "1 night": "#2ECC71",
+  "2 nights": "#27AE60",
+  "3 nights": "#1ABC9C",
+  "4–5 nights": "#F1C40F",
+  "6–7 nights": "#F39C12",
+  "8–14 nights": "#E67E22",
+  "15–21 nights": "#E74C3C",
+  "21+ nights": "#C0392B",
+};
 
-  function incArrayValue(arr, field) {
-    return arr.map((obj) =>
-      obj.duration === field ? { ...obj, value: obj.value + 1 } : obj
-    );
-  }
+const DurationChart = ({ data }) => {
+  /**
+ * Backend returns:
+ * [
+ *   { label: "1 night", count: 130 },
+ *   { label: "4–5 nights", count: 303 },
+ *   ...
+ * ]
+ *
+ * Frontend just maps it to chart format
+ */
 
-  const data = stays
-    .reduce((arr, cur) => {
-      const num = cur.numNights;
-      if (num === 1) return incArrayValue(arr, "1 night");
-      if (num === 2) return incArrayValue(arr, "2 nights");
-      if (num === 3) return incArrayValue(arr, "3 nights");
-      if ([4, 5].includes(num)) return incArrayValue(arr, "4-5 nights");
-      if ([6, 7].includes(num)) return incArrayValue(arr, "6-7 nights");
-      if (num >= 8 && num <= 14) return incArrayValue(arr, "8-14 nights");
-      if (num >= 15 && num <= 21) return incArrayValue(arr, "15-21 nights");
-      if (num >= 21) return incArrayValue(arr, "21+ nights");
-      return arr;
-    }, startData)
-    .filter((obj) => obj.value > 0);
 
-  return data;
+
+  const stayDurationsValue = data.map((item) => ({
+    name: item.label,
+    count: item.count,
+    color: startDataDark[Math.floor(Math.random() * startDataDark.length)].color,
+  }));
+  return (
+    <ChartBox>
+      <PieChart width={320} height={300}>
+
+        <Pie
+          data={stayDurationsValue}
+          dataKey="count"
+          nameKey="name"
+          outerRadius={110}
+          innerRadius={70}
+          label={({ name, count }) => `${name}: ${count}`}
+        >
+          {stayDurationsValue.map((entry, index) => (
+            <Cell key={index} fill={entry.color} />
+          ))}
+        </Pie>
+        <Tooltip />
+
+        <Legend
+          verticalAlign="bottom"
+          height={80}
+          iconType="circle"
+        />
+
+      </PieChart>
+
+    </ChartBox>
+
+  )
 }
+
+export default DurationChart

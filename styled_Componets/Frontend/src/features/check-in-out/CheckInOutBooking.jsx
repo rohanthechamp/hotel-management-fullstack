@@ -12,6 +12,7 @@ import CheckOutBooking from "./CheckOutBooking";
 import CheckInBooking from "./CheckInBooking";
 import Spinner from "../../ui/Spinner";
 import ErrorFallback from "../../ui/ErrorFallback";
+import { mapObj } from "../../utils/helpers";
 // import Button from "../../ui/Button";
 
 const CheckInOutBooking = () => {
@@ -23,14 +24,7 @@ const CheckInOutBooking = () => {
 
   const handleUpdates = useCallback(
     ({ columnName, columnValue, errorMsg, successMsg }) => {
-      let obj = {};
-
-      console.log(obj);
-
-      for (let index = 0; index < columnName.length; index++) {
-        obj[columnName[index]] = columnValue[index];
-      }
-      console.log(   'CheckInOutBooking - ' , obj)
+      const obj = mapObj(columnName, columnValue)
 
       checkin({
         id: bookingId,

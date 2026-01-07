@@ -187,7 +187,9 @@ import styled from "styled-components";
 import LoginForm from "../features/authentication/LoginForm";
 import Logo from "../ui/Logo";
 import Heading from "../ui/Heading";
-
+import { useNavigate } from "react-router-dom";
+import Button from "@mui/material/Button";
+import HowToRegIcon from "@mui/icons-material/HowToReg";
 const LoginLayout = styled.main`
   min-height: 100vh;
   display: grid;
@@ -198,14 +200,78 @@ const LoginLayout = styled.main`
   background-color: var(--color-grey-50);
 `;
 
+
+
+
+const SignUpNotice = styled.div`
+  margin-top: 1.6rem;
+  padding: 1.2rem 1.6rem;
+  border-radius: 12px;
+
+  background: linear-gradient(
+    135deg,
+    #196262,
+    #1f7a7a
+  );
+
+  color: #eafafa;
+  font-size: 0.95rem;
+  font-weight: 500;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.2rem;
+
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    text-align: center;
+  }
+`;
+
+
+
 function Login() {
+  const navigate = useNavigate();
+
   return (
     <LoginLayout>
       <Logo />
+
       <Heading as="h4">Log in to your account</Heading>
+
       <LoginForm />
+
+      <SignUpNotice>
+        <span>
+          Not an existing account on our platform?
+        </span>
+
+        <Button
+          variant="contained"
+          startIcon={<HowToRegIcon />}
+          onClick={() => navigate("/register")}
+          sx={{
+            backgroundColor: "#ffffff",
+            color: "#196262",
+            fontWeight: 600,
+            textTransform: "none",
+            borderRadius: "10px",
+            padding: "0.5rem 1.4rem",
+            "&:hover": {
+              backgroundColor: "#e0f2f1",
+              transform: "translateY(-1px)",
+            },
+            transition: "all 0.2s ease",
+          }}
+        >
+          Sign Up
+        </Button>
+      </SignUpNotice>
     </LoginLayout>
   );
 }
-
 export default Login;
+

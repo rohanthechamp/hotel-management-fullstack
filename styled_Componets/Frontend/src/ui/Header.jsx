@@ -78,12 +78,17 @@
 import styled from "styled-components";
 import HeaderMenu from "./HeaderMenu";
 import UserAvatar from "../features/authentication/UserAvatar";
+import DarkModeToggle from "./DarkModeToggle";
 
 const StyledHeader = styled.header`
   background-color: var(--color-grey-0);
   /* background-color: #c33636; */
   padding: 1.2rem 4.8rem;
   border-bottom: 1px solid var(--color-grey-100);
+  display: flex;
+  gap: 3.4rem;
+  align-items: center;
+  justify-content: end;
 `;
 
 function Header() {
@@ -91,6 +96,7 @@ function Header() {
     <StyledHeader>
       <UserAvatar/>
       <HeaderMenu />
+
     </StyledHeader>
   );
 }

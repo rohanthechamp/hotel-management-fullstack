@@ -5,6 +5,7 @@ export const useCurrentUser = () => {
     const { isLoading, data: UserData, error } = useQuery({
         queryKey: ["currentUserDetails"],
         queryFn: getCurrentUser,
+        staleTime:300
     });
 
 

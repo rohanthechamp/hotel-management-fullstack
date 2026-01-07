@@ -8,13 +8,18 @@ export const useUpdateBookings = () => {
     const queryClient = useQueryClient();
 
     const navigate = useNavigate();
-    const { mutate: checkin, isLoading: isProcessing,error } = useMutation({
-        mutationFn: ({ id, obj, errorMsg, successMsg }) => updateBooking(id, obj,errorMsg,successMsg),
+    const { mutate: checkin, isLoading: isProcessing, error } = useMutation({
+        mutationFn: ({ id, obj, errorMsg, successMsg }) => updateBooking(id, obj, errorMsg, successMsg),
         onSuccess: (_, variables) => {
             toast.success(`${variables.successMsg} for booking id ${variables.id}`);
             queryClient.invalidateQueries({ queryKey: ["bookings"] });
             queryClient.invalidateQueries({ queryKey: ["booking", variables.id] });
-            navigate('/bookings');
+            queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+
+            if (window.location.pathname === "/bookings") {
+                navigate("/bookings");
+            }
+
 
         },
 
@@ -27,5 +32,5 @@ export const useUpdateBookings = () => {
         },
     });
 
-    return { checkin, isProcessing,error };
+    return { checkin, isProcessing, error };
 };

@@ -29,25 +29,33 @@ export const formatCurrency = (value) =>
     value
   );
 
+export function getTodayKey() {
+  const now = new Date()
+  now.setHours(0, 0, 0, 0)
+  return now.toISOString().slice(0, 10) // "2026-01-03"
+}
 export const formDataHandel = (data) => {
-  const formData = new FormData();
+  if (!data) return console.log('No user data provided') ;
 
-  if (!data) return formData;
 
+  const newUserUpdateData = new FormData();
 
   // Append all fields
   for (const key in data) {
-    if (data[key] instanceof FileList) {
+    if (key === "image") {
       // Only append image if file is selected
       if (data[key] && data[key].length > 0) {
-        formData.append("image", data[key][0]); // File object
+        newUserUpdateData.append("image", data[key][0]); // File object
+        console.log(data[key][0]);
       }
-    } else if (data[key] !== null || data[key] !== undefined) {
-      formData.append(key, data[key]); // Normal fields
+    } else {
+      newUserUpdateData.append(key, data[key]); // Normal fields
     }
   }
 
-  return formData;
+  console.log("FormData- ", newUserUpdateData);
+
+  return newUserUpdateData;
 };
 
 
@@ -58,7 +66,19 @@ export const clearLocalStorage = (keysToRemove) => {
     .forEach(key => localStorage.removeItem(key));
 };
 
+export const rules = [
+  { min: 1, max: 1, label: "1 night" },
+  { min: 2, max: 2, label: "2 nights" },
+  { min: 3, max: 3, label: "3 nights" },
 
+  { min: 4, max: 5, label: "4-5 nights" },
+  { min: 6, max: 7, label: "6-7 nights" },
+
+  { min: 8, max: 14, label: "8-14 nights" },
+  { min: 15, max: 21, label: "15-21 nights" },
+
+  { min: 22, max: Infinity, label: "21+ nights" },
+];
 // // eslint-disable-next-line no-unused-vars
 // export const redirectUser = (urlKey, defaultUrl = "/",customUrl) => {
 //   if (!urlKey && !customUrl) return console.log('NO url KEY!')
@@ -74,3 +94,20 @@ export const clearLocalStorage = (keysToRemove) => {
 //   window.location.replace(redirectUrl || defaultUrl|| customUrl);
 
 // }
+export const mapObj = (columnName, columnValue) => {
+  let obj = {};
+  for (let index = 0; index < columnName.length; index++) {
+    obj[columnName[index]] = columnValue[index];
+  }
+  return obj;
+};
+export const stayDurationColorMap = {
+  1: "#2ECC71",        // 1 night
+  2: "#27AE60",        // 2 nights
+  3: "#1ABC9C",        // 3 nights
+  5: "#F1C40F",        // 4–5 nights
+  7: "#F39C12",        // 6–7 nights
+  14: "#E67E22",       // 8–14 nights
+  21: "#E74C3C",       // 15–21 nights
+  Infinity: "#C0392B" // 21+ nights
+};

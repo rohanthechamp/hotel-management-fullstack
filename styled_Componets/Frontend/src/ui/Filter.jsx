@@ -9,7 +9,7 @@ const StyledFilter = styled.div`
   padding: 0.4rem;
   display: flex;
   gap: 0.6rem;
-  color: yellow;
+  color: #083a9c;
 `;
 
 const FilterButton = styled.button`
@@ -36,6 +36,7 @@ const FilterButton = styled.button`
   }
 `;
 
+
 // import React from 'react'
 
 const Filter = ({ filterField, options }) => {
@@ -43,7 +44,7 @@ const Filter = ({ filterField, options }) => {
   const currentFilter = searchParams.get(filterField) || options.at(0).value;
 
   const handleClick = (value) => {
-    console.log('FROM FILTER COMPONENTS' ,value);
+    console.log('FROM FILTER COMPONENTS', value);
 
     // // searchParams.set(filterField, value);
     // // console.log('calling from Filter comp ',value)
@@ -54,10 +55,10 @@ const Filter = ({ filterField, options }) => {
     // newParams.delete("page"); // if you want to go to page 1 after filter
     // setSearchParams(newParams);
 
-       searchParams.set(filterField, value);
-       if (searchParams.get("page")) searchParams.set("page", 1);
+    searchParams.set(filterField, value);
+    if (searchParams.get("page")) searchParams.set("page", 1);
 
-       setSearchParams(searchParams);
+    setSearchParams(searchParams);
   };
   return (
     // <div>Discount/Not Discount</div>
@@ -68,7 +69,8 @@ const Filter = ({ filterField, options }) => {
           <FilterButton
             key={dt.value}
             type="button"
-            aria-pressed={isActive}
+            active={isActive}
+
             onClick={() => handleClick(dt.value)}
           >
             {dt.label}

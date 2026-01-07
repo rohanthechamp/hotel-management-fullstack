@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "django_filters",
     "rest_framework_simplejwt.token_blacklist",
+    "django_extensions",
 ]
 
 AUTH_USER_MODEL = "users.User"

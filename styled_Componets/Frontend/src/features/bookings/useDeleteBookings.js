@@ -12,7 +12,7 @@ export const useDeleteBookings = () => {
         mutationFn: ({ id }) => deleteBooking(id),
         onSuccess: (_, variables) => {
             toast.success('Booking Deleted Successfully of  😊😊😊-', variables.id);
-            queryClient.invalidateQueries({ queryKey: ["bookings"] });
+            queryClient.invalidateQueries({ queryKey: ["AllBookings"] });
             queryClient.invalidateQueries({ queryKey: ["booking", variables.id] });
             navigate('/bookings');
 

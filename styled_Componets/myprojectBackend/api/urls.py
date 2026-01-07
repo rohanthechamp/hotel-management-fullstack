@@ -10,6 +10,11 @@ from .views import (
     SettingsCreateListView,
     SingleSettingsView,
     HomeView,
+    GetBookingsLastXDaysView,
+    GetTodayActivitiesView,
+    StayDurationView,
+    BookingReadView,
+    DailyRevenueLastXDaysView,
 )
 
 urlpatterns = [
@@ -19,8 +24,14 @@ urlpatterns = [
     path("guests/<int:pk>/", SingleGuestRetrieveView.as_view()),
     path("bookings/", BookingsCreateListView.as_view()),
     path("bookings/<int:pk>/", SingleBookingRetrieveView.as_view()),
+    path("bookings/read/", BookingReadView.as_view()),
     path("settings/", SettingsCreateListView.as_view()),
     path("settings/<int:pk>/", SingleSettingsView.as_view()),
     # custom views
     path("", HomeView.as_view(), name="home"),
+    # dashboard data
+    path("dashboard/bookings/", GetBookingsLastXDaysView.as_view()),
+    path("dashboard/activities/today-summary/", GetTodayActivitiesView.as_view()),
+    path("dashboard/activities/stay-durations/", StayDurationView.as_view()),
+    path("dashboard/revenue/daily/", DailyRevenueLastXDaysView.as_view()),
 ]

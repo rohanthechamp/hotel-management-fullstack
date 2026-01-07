@@ -3,6 +3,7 @@ from rest_framework import serializers
 from django.core.validators import RegexValidator
 from .models import Cabins, Guests, Bookings, Settings
 from PIL import Image
+
 # from django.contrib.auth.mo//dels import User
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -17,6 +18,12 @@ def validate_positive(value):
     """Reusable check: value must be > 0."""
     if value is None or value <= 0:
         raise serializers.ValidationError("Value must be greater than zero.")
+
+
+def validate_positive_type(value):
+    """Reusable check: value must be > 0."""
+    if value is None or value < 0:
+        raise serializers.ValidationError("Value must be positive .")
 
 
 def validate_alpha_space(value):
@@ -78,7 +85,6 @@ class CabinSerializer(serializers.ModelSerializer):
         fields = "__all__"
         read_only_fields = ("user",)
 
-
     def validate_regularPrice(self, value):
         """Make sure regular price is non-negative and reasonable."""
         if value is None or value < 0:
@@ -112,7 +118,7 @@ class CabinSerializer(serializers.ModelSerializer):
     def validate_image(self, value):
         # If file is uploaded, validate size/type
         return validate_image_file(value)
-    
+
     # def save(self,validated_data):
     #     return super().save(**kwargs)
 
@@ -216,6 +222,16 @@ class GuestSerializer(serializers.ModelSerializer):
 # -----------------------
 
 
+class BookingReadSerializer(serializers.ModelSerializer):
+
+    guest = GuestSerializer(read_only=True)
+    cabin = CabinSerializer(read_only=True)
+
+    class Meta:
+        model = Bookings
+        fields = "__all__"
+
+
 class BookingWriteSerializer(serializers.ModelSerializer):
     """
     Serializer used for creating/updating bookings.
@@ -230,6 +246,8 @@ class BookingWriteSerializer(serializers.ModelSerializer):
 
     cabin = serializers.PrimaryKeyRelatedField(queryset=Cabins.objects.all())
     guest = serializers.PrimaryKeyRelatedField(queryset=Guests.objects.all())
+    # guest = GuestSerializer(many=True)
+    # cabin= CabinSerializer(many=True)
 
     class Meta:
         model = Bookings
@@ -280,17 +298,15 @@ class BookingWriteSerializer(serializers.ModelSerializer):
 
         # Date checks
         if start and end:
-            if start > end:
+
+            if end <= start:
                 raise serializers.ValidationError(
-                    {"endDate": "endDate must be the same or after startDate."}
-                )
-            if start < date.today():
-                raise serializers.ValidationError(
-                    {"startDate": "startDate cannot be in the past."}
+                    {"endDate": "endDate must be after startDate (at least 1 night)."}
                 )
 
             # Defensive check: numNights must equal date difference in days
             expected_nights = (end - start).days or 1
+
             if num_nights is not None and num_nights != expected_nights:
                 raise serializers.ValidationError(
                     {
@@ -343,7 +359,6 @@ class SettingsSerializer(serializers.ModelSerializer):
 
     class Meta:
 
-        
         model = Settings
         fields = "__all__"
 
@@ -362,5 +377,35 @@ class SettingsSerializer(serializers.ModelSerializer):
         return attrs
 
 
+class GetBookingsLastXDaysSerializer(serializers.Serializer):
+
+    totalBookings = serializers.IntegerField(validators=[validate_positive_type])
+    totalSales = serializers.IntegerField(
+        validators=[validate_positive_type]
+    )  # ! should be decimal field
+    totalCheckIns = serializers.IntegerField(validators=[validate_positive_type])
+    occupancyRate = serializers.DecimalField(max_digits=5, decimal_places=2)
+
+
 class MessageSerializer(serializers.Serializer):
     message = serializers.CharField()
+
+
+class GuestMiniSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Guests
+        fields = ["fullName", "countryFlag", "nationality"]
+
+
+class TodayActivitySerializer(serializers.ModelSerializer):
+    guest = GuestMiniSerializer()
+
+    class Meta:
+        model = Bookings
+        fields = ["id", "status", "numNights", "guest"]
+
+
+class DailyRevenueSerializer(serializers.Serializer):
+    date = serializers.DateField()
+    totalSales = serializers.DecimalField(max_digits=12, decimal_places=2)
+    extrasSales = serializers.DecimalField(max_digits=12, decimal_places=2)

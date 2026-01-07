@@ -57,8 +57,8 @@ class Bookings(models.Model):
     user = models.ForeignKey(
         to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="booking"
     )
-    created_at = models.DateField(auto_now_add=True, db_index=True)
-    startDate = models.DateField(auto_now_add=True, db_index=True)
+    created_at = models.DateField( db_index=True)
+    startDate = models.DateField(db_index=True)
     endDate = models.DateField(db_index=True)
     numNights = models.IntegerField(
         blank=False, null=False, validators=[MinValueValidator(1), MaxValueValidator(7)]
@@ -107,6 +107,8 @@ class Settings(models.Model):
 
     def __str__(self):
         return "Settings for HOTEL"
+
+
 # Bookings.objects.delete()
 # Bookings.objects.all().count()
 # print(Bookings.objects.all().count())

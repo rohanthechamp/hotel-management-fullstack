@@ -24,7 +24,7 @@ export const logInUser = async (formData) => {
 
 export const getCurrentUser = async () => {
     try {
-        const { data } = await axiosClient.post("users/user/me",);
+        const { data } = await axiosPrivate.get("users/user/me",);
         console.log(data)
         return data;
     } catch (error) {
@@ -33,7 +33,27 @@ export const getCurrentUser = async () => {
     }
 };
 
+export const UpdateCurrentUser = async (formData) => {
+    try {
+        const { data } = await axiosPrivate.patch("users/user/me/update/profile", formData);
+        console.log(data)
+        return data;
+    } catch (error) {
+        // Keep the error consistent for the hook
+        throw error?.response?.data || new Error("Updating  current user details Failed!!!");
+    }
+};
 
+export const UpdateCurrentUserPassword = async (password) => {
+    try {
+        const { data } = await axiosPrivate.patch("users/user/me/update/password", password);
+        console.log(data)
+        return data;
+    } catch (error) {
+        // Keep the error consistent for the hook
+        throw error?.response?.data || new Error("Updating  current user password Failed!!!");
+    }
+};
 export const logOutUser = async (refreshToken) => {
     try {
         const res = await axiosPrivate.post("users/logout/", {

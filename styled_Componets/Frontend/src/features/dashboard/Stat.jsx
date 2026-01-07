@@ -48,13 +48,13 @@ const Value = styled.p`
 `;
 
 function Stat({ icon, title, value, color }) {
-  return (
-    <StyledStat>
-      <Icon color={color}>{icon}</Icon>
-      <Title>{title}</Title>
-      <Value>{value}</Value>
-    </StyledStat>
-  );
+    return (
+        <StyledStat>
+            <Icon color={color}>{icon}</Icon>
+            <Title>{title}</Title>
+            <Value>{value}</Value>
+        </StyledStat>
+    );
 }
 
 export default Stat;

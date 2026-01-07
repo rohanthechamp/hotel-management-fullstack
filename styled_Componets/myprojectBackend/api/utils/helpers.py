@@ -38,3 +38,15 @@
 #         raise serializers.ValidationError("Only JPEG and PNG images are allowed.")
 
 #     return value
+from django.db.models import Q
+
+BUCKETS = [
+    ("1 night", Q(numNights=1)),
+    ("2 nights", Q(numNights=2)),
+    ("3 nights", Q(numNights=3)),
+    ("4–5 nights", Q(numNights__gte=4, numNights__lte=5)),
+    ("6–7 nights", Q(numNights__gte=6, numNights__lte=7)),
+    ("8–14 nights", Q(numNights__gte=8, numNights__lte=14)),
+    ("15–21 nights", Q(numNights__gte=15, numNights__lte=21)),
+    ("21+ nights", Q(numNights__gte=22)),
+]

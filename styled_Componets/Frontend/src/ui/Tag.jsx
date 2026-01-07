@@ -21,11 +21,13 @@ const Tag = styled.span`
   text-transform: uppercase;
   font-size: 1.1rem;
   font-weight: 600;
-  padding: 0.8rem 1.2rem;
-  border-radius: 100px;
+  padding: 0.7rem 0.3rem;
+  border-radius: 50px;
+  text-align: center;
 
-  color: ${(props) => props.color};
-  background-color: ${(props) => props.bg};
+  /* Make these dynamic, based on the received prop */
+  color: var(--color-${(props) => props.type}-700);
+  background-color: var(--color-${(props) => props.type}-100);
 `;
 
 export default Tag;

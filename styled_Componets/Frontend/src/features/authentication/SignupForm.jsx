@@ -36,7 +36,7 @@ function SignupForm() {
 
         toast.success(String(response.message));
         navigate('/login')
-      
+
       } catch (error) {
         toast.error(`Failed to create user!${error} `);
       } finally {
@@ -49,10 +49,10 @@ function SignupForm() {
   const onSubmit = async (data) => {
     console.log('in on submit data', data)
     const value = formDataHandel(data);
-    
+
 
     // console.log('in on submit value',value)
-    console.log( "in on submit value", Object.fromEntries(value))
+    console.log("in on submit value", Object.fromEntries(value))
     setFormData(value);
 
     setIsSubmitted(true);
@@ -61,11 +61,11 @@ function SignupForm() {
 
   return (
     <Form onSubmit={handleSubmit(onSubmit)}>
-      <FormRow label="username" error={errors?.username?.message}>
+      <FormRow label="name" error={errors?.name?.message}>
         <Input
           type="text"
-          id="username"
-          {...register("username", { required: "username is required" })}
+          id="name"
+          {...register("name", { required: "name is required" })}
           disabled={""}
         />
       </FormRow>
@@ -77,7 +77,7 @@ function SignupForm() {
           {...register("email", {
             required: "Email is required",
             pattern: {
-              value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+              value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
               message: "Invalid email address",
             },
           })}
@@ -112,7 +112,7 @@ function SignupForm() {
               return val === password || "Passwords should match!";
             },
           })}
-        /> 
+        />
       </FormRow>
 
       <FormRow>
