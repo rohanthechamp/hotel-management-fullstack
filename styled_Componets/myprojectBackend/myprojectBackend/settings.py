@@ -82,11 +82,13 @@ AUTHENTICATION_BACKENDS = [
 
 # CORS CONFIG (Local Dev)
 CORS_ALLOW_CREDENTIALS = True
+
 # Not using cookies for auth
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
+    "http://localhost:3000",
 ]
-
+    
 CORS_ALLOW_HEADERS = [
     "authorization",
     "content-type",
@@ -120,6 +122,7 @@ STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
 
+
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
@@ -127,6 +130,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # DRF Default Auth
 REST_FRAMEWORK = {
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",  # new
+    ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],

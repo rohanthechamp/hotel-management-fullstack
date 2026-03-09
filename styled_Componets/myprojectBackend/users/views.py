@@ -68,6 +68,7 @@ class LoginUserView(APIView):
             )
 
         username = user.name  # or any field you want to return
+        useRole = user.role
 
         # Generating tokens
         refresh = RefreshToken.for_user(user)
@@ -82,6 +83,7 @@ class LoginUserView(APIView):
                 "email": getattr(user, "email", None),
                 "access": access_token,
                 "refresh": refresh_token,
+                "userRole": useRole,
                 # Do NOT send refresh token in JSON anymore
             },
             status=status.HTTP_200_OK,

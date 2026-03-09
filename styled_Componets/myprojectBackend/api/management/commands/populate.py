@@ -1,3 +1,214 @@
+import random
+from decimal import Decimal, ROUND_HALF_UP
+from datetime import date, timedelta
+
+from django.core.management.base import BaseCommand
+from django.db import transaction
+from django.contrib.auth import get_user_model
+from faker import Faker
+from sqlalchemy import false
+
+from api.models import Cabins, Guests, Bookings, Hotel, Settings
+
+fake = Faker()
+
+
+def random_date_within(days_back=365):
+    return date.today() - timedelta(days=random.randint(0, days_back))
+
+
+class Command(BaseCommand):
+    help = "Populate demo data with correct SaaS tenant bootstrap"
+
+    def add_arguments(self, parser):
+        parser.add_argument("--cabins", type=int, default=500)
+        parser.add_argument("--guests", type=int, default=200)
+        parser.add_argument("--bookings", type=int, default=1000)
+        parser.add_argument("--chunk", type=int, default=100)
+
+    @transaction.atomic
+    def handle(self, *args, **options):
+        User = get_user_model()
+
+
+        Bookings.objects.all().delete()
+        Guests.objects.all().delete()
+        Settings.objects.all().delete()
+        Cabins.objects.all().delete()
+
+        cabin_count = options["cabins"]
+        guest_count = options["guests"]
+        booking_count = options["bookings"]
+        chunk_size = options["chunk"]
+        today = date.today()
+
+        # ---------------------------------------------------
+        # 1️⃣ Create platform admin (NO HOTEL YET)
+        # ---------------------------------------------------
+        demo_user, created = User.objects.get_or_create(
+            email="john@gmail.com",
+            defaults={"name": "John Admin"},
+        )
+
+        demo_user.is_staff = True
+        demo_user.is_superuser = True
+        demo_user.role = "Admin"
+
+        if created:
+            demo_user.set_password("admin123")
+
+        demo_user.save()
+
+        # ---------------------------------------------------
+        # 2️⃣ Create hotel (tenant)
+        # ---------------------------------------------------
+        our_hotel, _ = Hotel.objects.get_or_create(
+            email="wildthesis@gmail.com",
+            defaults={
+                "startDate": today - timedelta(days=random.randint(300, 800)),
+                "name": "Wild Thesis",
+                "address": "xyz street , Los Angeles, USA",
+            },
+        )
+
+        # ---------------------------------------------------
+        # 3️⃣ Bind hotel to admin
+        # ---------------------------------------------------
+        demo_user.hotel = our_hotel
+        demo_user.save()
+
+        # ---------------------------------------------------
+        # 4️⃣ Settings
+        # ---------------------------------------------------
+        Settings.objects.get_or_create(
+            hotel=our_hotel,
+            defaults={
+                "created_at": today,
+                "minBookingLength": 1,
+                "maxBookingLength": 7,
+                "minGuestsPerBooking": 1,
+                "breakfastPrice": Decimal("5.00"),
+            },
+        )
+
+        # ---------------------------------------------------
+        # 5️⃣ Guests
+        # ---------------------------------------------------
+        guest_objs = []
+        for i in range(guest_count):
+            guest_objs.append(
+                Guests(
+                    created_at=random_date_within(180),
+                    hotel=our_hotel,
+                    fullName=fake.name(),
+                    email=fake.unique.email(),
+                    nationalID=1_000_000_000 + i,
+                    nationality=fake.country(),
+                )
+            )
+        Guests.objects.bulk_create(guest_objs)
+        guest_ids = list(Guests.objects.values_list("id", flat=True))
+
+        # ---------------------------------------------------
+        # 6️⃣ Cabins
+        # ---------------------------------------------------
+        cabin_objs = []
+        for i in range(cabin_count):
+            cabin_objs.append(
+                Cabins(
+                    user=demo_user,
+                    hotel=our_hotel,
+                    created_at=random_date_within(300),
+                    name=f"Cabin {i+1}",
+                    maxCapacity=random.choice([1, 2]),
+                    regularPrice=Decimal(str(round(random.uniform(50, 500), 2))),
+                    discount=Decimal(str(random.uniform(5, 20))).quantize(
+                        Decimal("0.01"), rounding=ROUND_HALF_UP
+                    ),
+                    observations=fake.sentence(150,false),
+                )
+            )
+        Cabins.objects.bulk_create(cabin_objs)
+
+        cabin_ids = list(Cabins.objects.values_list("id", flat=True))
+        cabin_map = Cabins.objects.in_bulk(cabin_ids)
+        cabin_price_map = {k: v.regularPrice for k, v in cabin_map.items()}
+
+        # ---------------------------------------------------
+        # 7️⃣ Bookings
+        # ---------------------------------------------------
+        booking_objs = []
+        created_count = 0
+
+        for i in range(booking_count):
+            cabin_id = random.choice(cabin_ids)
+            guest_id = random.choice(guest_ids)
+            cabin = cabin_map[cabin_id]
+            price = cabin_price_map[cabin_id]
+
+            num_guests = random.randint(1, cabin.maxCapacity)
+            num_nights = random.randint(1, 7)
+
+            extras = (
+                Decimal(str(round(random.uniform(0, 100), 2)))
+                if random.random() < 0.4
+                else Decimal("0.00")
+            )
+
+            mode = random.choices(
+                ["past", "active", "future"], weights=[40, 30, 30], k=1
+            )[0]
+
+            if mode == "past":
+                end = today - timedelta(days=random.randint(1, 30))
+                start = end - timedelta(days=num_nights)
+                created_at = start - timedelta(days=random.randint(1, 30))
+                status = "checked-out"
+            elif mode == "active":
+                start = today - timedelta(days=random.randint(0, num_nights - 1))
+                end = start + timedelta(days=num_nights)
+                created_at = start - timedelta(days=random.randint(1, 30))
+                status = "checked-in"
+            else:
+                start = today + timedelta(days=random.randint(1, 30))
+                end = start + timedelta(days=num_nights)
+                created_at = today - timedelta(days=random.randint(1, 30))
+                status = "unconfirmed"
+
+            total = (Decimal(num_nights) * price) + extras
+
+            booking_objs.append(
+                Bookings(
+                    user=demo_user,
+                    hotel=our_hotel,
+                    created_at=created_at,
+                    startDate=start,
+                    endDate=end,
+                    numNights=num_nights,
+                    numGuests=num_guests,
+                    cabinPrice=price,
+                    extrasPrice=extras,
+                    totalPrice=total,
+                    status=status,
+                    isPaid=random.choice([True, False]),
+                    observations=fake.sentence(),
+                    cabin_id=cabin_id,
+                    guest_id=guest_id,
+                )
+            )
+
+            if len(booking_objs) >= chunk_size:
+                Bookings.objects.bulk_create(booking_objs)
+                created_count += len(booking_objs)
+                booking_objs = []
+
+        if booking_objs:
+            Bookings.objects.bulk_create(booking_objs)
+            created_count += len(booking_objs)
+
+        self.stdout.write(self.style.SUCCESS(f"Created {created_count} bookings"))
+        self.stdout.write(self.style.SUCCESS("Demo hotel fully initialized"))
+
 # # management/commands/populate.py
 # import email
 # import random
@@ -224,173 +435,3 @@
 #             self.stdout.write(self.style.SUCCESS("Demo population complete."))
 
 #     # python manage.py populate --cabins 100 --guests 500 --bookings 1000 --chunk 50
-import random
-from decimal import Decimal, ROUND_HALF_UP
-from datetime import date, timedelta
-
-from django.core.management.base import BaseCommand
-from django.db import transaction
-from django.contrib.auth import get_user_model
-from faker import Faker
-
-from api.models import Cabins, Guests, Bookings, Settings
-
-fake = Faker()
-
-
-def random_date_within(days_back=365):
-    return date.today() - timedelta(days=random.randint(0, days_back))
-
-
-class Command(BaseCommand):
-    help = "Populate demo data"
-
-    def add_arguments(self, parser):
-        parser.add_argument("--cabins", type=int, default=5000)
-        parser.add_argument("--guests", type=int, default=200)
-        parser.add_argument("--bookings", type=int, default=1000)
-        parser.add_argument("--chunk", type=int, default=50)
-
-    @transaction.atomic
-    def handle(self, *args, **options):
-        User = get_user_model()
-
-        cabin_count = options["cabins"]
-        guest_count = options["guests"]
-        booking_count = options["bookings"]
-        chunk_size = options["chunk"]
-
-        # Reset
-        # Bookings.objects.all().delete()
-        # Guests.objects.all().delete()
-        # Cabins.objects.all().delete()
-        # Settings.objects.all().delete()
-
-        # Demo user
-        demo_user, _ = User.objects.get_or_create(
-            email="john@gmail.com", defaults={"name": "neverSeen17"}
-        )
-        demo_user.set_password("3323inrnndn")
-        demo_user.save()
-
-        # Settings
-        Settings.objects.create(
-            created_at=date.today(),
-            minBookingLength=1,
-            maxBookingLength=7,
-            minGuestsPerBooking=1,
-            breakfastPrice=Decimal("5.00"),
-        )
-
-        # Guests
-        guest_objs = []
-        for i in range(guest_count):
-            guest_objs.append(
-                Guests(
-                    created_at=random_date_within(180),
-                    fullName=fake.name(),
-                    email=fake.unique.email(),
-                    nationalID=1_000_000_000 + i,
-                    nationality=fake.country(),
-                )
-            )
-        Guests.objects.bulk_create(guest_objs)
-        guest_ids = list(Guests.objects.values_list("id", flat=True))
-
-        # Cabins
-        cabin_objs = []
-        for i in range(cabin_count):
-            cabin_objs.append(
-                Cabins(
-                    user=demo_user,
-                    created_at=random_date_within(300),
-                    name=f"Cabin {i+1}",
-                    maxCapacity=random.choice([1, 2]),
-                    regularPrice=Decimal(str(round(random.uniform(50, 500), 2))),
-                    discount=Decimal(str(random.uniform(5, 20))).quantize(
-                        Decimal("0.01"), rounding=ROUND_HALF_UP
-                    ),
-                    observations=fake.sentence(),
-                )
-            )
-        Cabins.objects.bulk_create(cabin_objs)
-
-        cabin_ids = list(Cabins.objects.values_list("id", flat=True))
-        cabin_map = Cabins.objects.in_bulk(cabin_ids)
-        cabin_price_map = {k: v.regularPrice for k, v in cabin_map.items()}
-
-        # Bookings
-        today = date.today()
-        booking_objs = []
-        created = 0
-
-        for i in range(booking_count):
-            cabin_id = random.choice(cabin_ids)
-            guest_id = random.choice(guest_ids)
-            cabin = cabin_map[cabin_id]
-            price = cabin_price_map[cabin_id]
-
-            num_guests = random.randint(1, cabin.maxCapacity)
-            num_nights = random.randint(1, 7)
-
-            extras = (
-                Decimal(str(round(random.uniform(0, 100), 2)))
-                if random.random() < 0.4
-                else Decimal("0.00")
-            )
-
-            mode = random.choices(
-                ["past", "active", "future"], weights=[40, 30, 30], k=1
-            )[0]
-
-            if mode == "past":
-                end = today - timedelta(days=random.randint(1, 30))
-                start = end - timedelta(days=num_nights)
-                created_at = start - timedelta(days=random.randint(1, 30))
-                status = "checked-out"
-            elif mode == "active":
-                start = today - timedelta(days=random.randint(0, num_nights - 1))
-                end = start + timedelta(days=num_nights)
-                created_at = start - timedelta(days=random.randint(1, 30))
-
-                status = "checked-in"
-
-            else:
-                start = today + timedelta(days=random.randint(1, 30))
-                end = start + timedelta(days=num_nights)
-                created_at = today - timedelta(days=random.randint(1, 30))
-
-                status = "unconfirmed"
-
-            total = (Decimal(num_nights) * price) + extras
-
-            booking_objs.append(
-                Bookings(
-                    user=demo_user,
-                    created_at=created_at,
-                    startDate=start,
-                    endDate=end,
-                    numNights=num_nights,
-                    numGuests=num_guests,
-                    cabinPrice=price,
-                    extrasPrice=extras,
-                    totalPrice=total,
-                    status=status,
-                    isPaid=random.choice([True, False]),
-                    observations=fake.sentence(),
-                    cabin_id=cabin_id,
-                    guest_id=guest_id,
-                )
-            )
-
-            if len(booking_objs) >= chunk_size:
-                Bookings.objects.bulk_create(booking_objs)
-                created += len(booking_objs)
-                booking_objs = []
-
-        if booking_objs:
-            Bookings.objects.bulk_create(booking_objs)
-            created += len(booking_objs)
-
-        self.stdout.write(self.style.SUCCESS(f"Created {created} bookings"))
-        self.stdout.write(self.style.SUCCESS("Demo data ready"))

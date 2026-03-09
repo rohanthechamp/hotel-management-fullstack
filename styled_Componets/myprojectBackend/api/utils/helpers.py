@@ -39,6 +39,32 @@
 
 #     return value
 from django.db.models import Q
+# from .models import ExpenseModel
+import json
+from django.db.models import Sum, Q, QuerySet, OuterRef, F, Subquery
+from django.db.models.functions import ExtractMonth
+from django.utils import timezone
+from django.core.cache import cache
+from django.contrib.postgres.search import (
+    SearchQuery,
+    SearchVector,
+    SearchRank,
+)
+import logging
+from dateutil.relativedelta import relativedelta
+from django.db.models.functions import TruncDay
+import calendar
+# from myapp.models import Budget
+# import pandas as pd
+# import matplotlib.pyplot as plt
+# from io import BytesIO
+# import base64
+# from myapp.models import ExpenseModel, Income, Budget
+from typing import List, Optional
+from django.contrib.auth.models import User
+import traceback
+# from tablib import Dataset
+import re
 
 BUCKETS = [
     ("1 night", Q(numNights=1)),
@@ -50,3 +76,14 @@ BUCKETS = [
     ("15–21 nights", Q(numNights__gte=15, numNights__lte=21)),
     ("21+ nights", Q(numNights__gte=22)),
 ]
+
+def user_cache_key(prefix: str, user: User, version: Optional[int] = None) -> str:
+    """
+    Standardize cache key format, with optional versioning.
+    """
+    _VALID = re.compile(r"^[A-Za-z0-9_]+$")
+    if not _VALID.match(prefix):
+        raise ValueError(f"Invalid cache prefix: {prefix!r}")
+
+    base = f"{prefix}_u{user.id}"
+    return f"v{version}:{base}" if version is not None else base

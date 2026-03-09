@@ -85,6 +85,21 @@ class CabinSerializer(serializers.ModelSerializer):
         fields = "__all__"
         read_only_fields = ("user",)
 
+    def validate_maxCapacity(self, value):
+        """Ensure a cabin cannot hold more than 5 guests."""
+        if value is None:
+            raise serializers.ValidationError("Max capacity is required.")
+
+        if value > 2:
+            raise serializers.ValidationError(
+                "A cabin cannot accommodate more than 2 guests."
+            )
+
+        if value < 1:
+            raise serializers.ValidationError("Max capacity must be at least 1.")
+
+        return value
+
     def validate_regularPrice(self, value):
         """Make sure regular price is non-negative and reasonable."""
         if value is None or value < 0:

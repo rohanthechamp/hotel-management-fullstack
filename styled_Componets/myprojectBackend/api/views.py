@@ -11,14 +11,31 @@ from django.db.models.functions import TruncDate
 from django.utils import timezone
 from warnings import filters
 from rest_framework import generics, filters
-from rest_framework.permissions import IsAdminUser, IsAuthenticated, AllowAny
+from rest_framework.permissions import (
+    IsAdminUser,
+    IsAuthenticated,
+    IsAuthenticatedOrReadOnly,
+    AllowAny,
+)
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from django_filters.rest_framework import DjangoFilterBackend
 from sqlalchemy import true
 from api.filters import PaidBookings, RecentPaidBookings
 from api.pagination import CustomPagination
-from api.utils.helpers import BUCKETS
+from api.permission import (
+    AllBookingsPermission,
+    AllCabinPermission,
+    AllGuestsPermission,
+    AllSettingsPermission,
+    SingleCabinPermission,
+    CheckINBookingPermission,
+    CheckOUTBookingPermission,
+    CancelBookingPermission,
+    SingleGuestPermission,
+    SingleSettingPermission,
+)
+from api.utils.helpers import BUCKETS, user_cache_key
 from .models import Cabins, Guests, Bookings, Settings
 from .serializers import (
     BookingReadSerializer,
@@ -49,6 +66,8 @@ class CabinCreateListView(generics.ListCreateAPIView):
     POST /cabins/    -> Create a cabin (admin only)
     """
 
+    # permission_classes = [AllCabinPermission]
+    permission_classes = [AllowAny]
     serializer_class = CabinSerializer
     # filterset_class = CabinsFilter
     filter_backends = [
@@ -78,14 +97,6 @@ class CabinCreateListView(generics.ListCreateAPIView):
 
         return queryset
 
-    def get_permissions(self):
-        """Allow Authenticate GET, admin-only POST."PUT", "PATCH", "DELETE"]
-
-        #^ all cabins - get (see) - post (create)
-        #*            - public    - authenticated staff user
-        """
-        return [IsAuthenticated()] if self.request.method in ["POST"] else [AllowAny()]
-
 
 class SingleCabinRetrieveView(generics.RetrieveUpdateDestroyAPIView):
     """
@@ -95,18 +106,10 @@ class SingleCabinRetrieveView(generics.RetrieveUpdateDestroyAPIView):
     DELETE /cabins/<pk>/  -> Delete cabin (admin only)
     """
 
+    # permission_classes = [SingleCabinPermission]
+    permission_classes = [AllowAny]
     queryset = Cabins.objects.all()
     serializer_class = CabinSerializer
-
-    def get_permissions(self):
-        """Public read, admin-only update/delete.
-
-        # ^ single cabin - delete - put/patch
-        #*               - admin - object owner
-        """
-        return (
-            [IsAuthenticated()] if self.request.method in ["GET"] else [IsAdminUser()]
-        )
 
 
 # ----------------------------------------------------------
@@ -124,6 +127,7 @@ class GuestsCreateListView(generics.ListCreateAPIView):
 
     """
 
+    permission_classes = [AllGuestsPermission]
     queryset = Guests.objects.all()
     serializer_class = GuestSerializer
     filter_backends = [
@@ -134,11 +138,6 @@ class GuestsCreateListView(generics.ListCreateAPIView):
     search_fields = ["=fullName", "nationality"]
     ordering_fields = ["created_at"]
     ordering = ["id"]
-    # pagination_class=PageNumberPagination
-
-    def get_permissions(self):
-        """Allow public GET, admin-only POST."""
-        return [IsAdminUser()] if self.request.method == "POST" else [IsAuthenticated()]
 
 
 class SingleGuestRetrieveView(generics.RetrieveUpdateDestroyAPIView):
@@ -152,12 +151,10 @@ class SingleGuestRetrieveView(generics.RetrieveUpdateDestroyAPIView):
     #*           -  admin only...
     """
 
+    permission_classes = [AllGuestsPermission, SingleGuestPermission]
+
     queryset = Guests.objects.all()
     serializer_class = GuestSerializer
-
-    def get_permissions(self):
-        """Public read, admin-only update/delete."""
-        return [IsAuthenticated()] if self.request.method != "GET" else [IsAdminUser()]
 
 
 # ----------------------------------------------------------
@@ -173,6 +170,8 @@ class BookingsCreateListView(generics.ListCreateAPIView):
     #*           -  public -   authenticated/staff user
     """
 
+    permission_classes = [AllBookingsPermission]
+
     queryset = Bookings.objects.prefetch_related("cabin", "guest").all()
     # filterset_class = BookingFilter
     serializer_class = BookingWriteSerializer
@@ -185,9 +184,9 @@ class BookingsCreateListView(generics.ListCreateAPIView):
 
     pagination_class = CustomPagination
 
-    # def get_permissions(self):
-    #     """Allow public GET, admin-only POST."""
-    #     return [IsAdminUser()] if self.request.method == "POST" else [IsAuthenticated()]
+    def get_permissions(self):
+        """Allow public GET, admin-only POST."""
+        return [IsAdminUser()] if self.request.method == "POST" else [IsAuthenticated()]
 
     def get_queryset(self):
         queryset = self.queryset
@@ -220,12 +219,16 @@ class SingleBookingRetrieveView(generics.RetrieveUpdateDestroyAPIView):
     #*                -  authenticated/staff user   admin only...
     """
 
+    # permission_classes = [
+    #     AllBookingsPermission,
+    #     CheckINBookingPermission,
+    #     CheckOUTBookingPermission,
+    #     CancelBookingPermission,
+    # ]
+    permission_classes = [AllowAny]
+
     queryset = Bookings.objects.select_related("cabin", "guest").all()
     serializer_class = BookingWriteSerializer
-
-    def get_permissions(self):
-        """Public read, admin-only update/delete."""
-        return [IsAdminUser()] if self.request.method == "POST" else [IsAuthenticated()]
 
 
 # ----------------------------------------------------------
@@ -241,14 +244,10 @@ class SettingsCreateListView(generics.ListCreateAPIView):
     #*              -  public  - admin only...
     """
 
-    # permission_classes = (IsAuthenticated,)
+    permission_classes = [AllowAny]
 
     queryset = Settings.objects.all()
     serializer_class = SettingsSerializer
-
-    # def get_permissions(self):
-    #     """Allow public GET, admin-only POST."""
-    #     return [IsAdminUser()] if self.request.method == "DELETE" else [IsAuthenticated()]
 
 
 class SingleSettingsView(generics.RetrieveUpdateDestroyAPIView):
@@ -263,14 +262,10 @@ class SingleSettingsView(generics.RetrieveUpdateDestroyAPIView):
 
     """
 
-    # permission_classes = (IsAuthenticated,)
+    permission_classes = [AllSettingsPermission, SingleSettingPermission]
 
     queryset = Settings.objects.all()
     serializer_class = SettingsSerializer
-
-    # def get_permissions(self):
-    #     """Public read, admin-only update/delete."""
-    #     return [IsAdminUser()] if self.request.method == "DELETE" else [IsAuthenticated()]
 
 
 # # * function based views
@@ -287,13 +282,30 @@ class SingleSettingsView(generics.RetrieveUpdateDestroyAPIView):
 #         return Response({"message": f"Hello {request.user.username}!"})
 #     return JsonResponse({"data": serializer.data})
 class BookingReadView(APIView):
-    # permission_classes = (/IsAuthenticated,)
+    # permission_classes = (IsAuthenticated)
 
     def get(self, request):
         bookingID = int(request.query_params.get("bookingID", 90))
         bookingData = Bookings.objects.filter(id=bookingID).first()
         serializer = BookingReadSerializer(bookingData)
         return Response(serializer.data)
+
+
+class CabinBookedDatesView(APIView):
+    """
+    GET /cabins/<cabin_id>/booked-dates/
+    Returns all booked date ranges for a specific cabin
+    """
+
+    permission_classes = [AllowAny]
+
+    def get(self, request, cabin_id):
+        
+        bookings = Bookings.objects.filter(cabin_id=cabin_id).values(
+            "startDate", "endDate"
+        )
+
+        return Response(list(bookings))
 
 
 # &DashBoard Data
@@ -305,7 +317,8 @@ class GetBookingsLastXDaysView(APIView):
     def get(self, request):
         days = int(request.query_params.get("filterValue", 7))
         print("days", days)
-        cache_key = f"dashboard_stats_{days}"
+        # cache_key = f"dashboard_stats_{days}"
+        cache_key = user_cache_key("dashboardLastxDays", request.user, 1)
 
         cached = cache.get(cache_key)
         if cached:
@@ -348,14 +361,14 @@ class GetBookingsLastXDaysView(APIView):
         response_data = serializer.validated_data
         print(data)
 
-        # cache for 60 seconds (tune this later)
+        # cache for 60 seconds
         cache.set(cache_key, response_data, timeout=360)
 
         return Response(response_data)
 
 
 class GetTodayActivitiesView(APIView):
-    permission_classes = (IsAuthenticated,)
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
 
@@ -397,7 +410,7 @@ class GetTodayActivitiesView(APIView):
 
 
 class StayDurationView(APIView):
-    permission_classes = (IsAuthenticated,)
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         days = int(request.query_params.get("filterValue", 7))
@@ -416,20 +429,6 @@ class StayDurationView(APIView):
         return Response(data)
 
 
-# from datetime import timedelta/
-
-
-# from django.utils import timezone
-# from django.core.cache import cache
-# from django.db.models import Sum
-
-# from rest_framework.views import APIView
-# from rest_framework.permissions import IsAuthenticated
-# from rest_framework.response import Response
-
-# from api.models import Bookings
-
-
 class DailyRevenueLastXDaysView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -439,7 +438,8 @@ class DailyRevenueLastXDaysView(APIView):
         today = timezone.now().date()
         start_date = today - timedelta(days=days - 1)
 
-        cache_key = f"daily_revenue_{days}"
+        # cache_key = f"daily_revenue_{days}"
+        cache_key = user_cache_key("dailyRevenueLastXDays", request.user, 1)
 
         cached = cache.get(cache_key)
         if cached:

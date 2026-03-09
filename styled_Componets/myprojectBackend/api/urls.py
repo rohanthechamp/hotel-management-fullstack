@@ -15,6 +15,7 @@ from .views import (
     StayDurationView,
     BookingReadView,
     DailyRevenueLastXDaysView,
+    CabinBookedDatesView,
 )
 
 urlpatterns = [
@@ -34,4 +35,9 @@ urlpatterns = [
     path("dashboard/activities/today-summary/", GetTodayActivitiesView.as_view()),
     path("dashboard/activities/stay-durations/", StayDurationView.as_view()),
     path("dashboard/revenue/daily/", DailyRevenueLastXDaysView.as_view()),
+    path(
+        "cabins/<int:cabin_id>/booked-dates/",
+        CabinBookedDatesView.as_view(),
+        name="cabin-booked-dates",
+    ),
 ]
