@@ -126,6 +126,14 @@ import {
 } from "recharts";
 import { HiPaperAirplane } from "react-icons/hi2";
 
+// const StyledSalesChart = styled(DashboardBox)`
+//   grid-column: 1 / -1;
+
+//   & .recharts-cartesian-grid-horizontal line,
+//   & .recharts-cartesian-grid-vertical line {
+//     stroke: var(--color-grey-300);
+//   }
+// `;
 const StyledSalesChart = styled(DashboardBox)`
   grid-column: 1 / -1;
 
@@ -134,7 +142,6 @@ const StyledSalesChart = styled(DashboardBox)`
     stroke: var(--color-grey-300);
   }
 `;
-
 // Replace later with real theme hook
 const isDarkMode = true;
 

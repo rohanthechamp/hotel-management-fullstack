@@ -235,8 +235,8 @@
 import styled from "styled-components";
 import Heading from "../../ui/Heading";
 import Row from "../../ui/Row";
-import ErrorFallback from "../../ui/ErrorFallback";
 import TodayItem from "./TodayItem";
+import Empty from "../../ui/Empty";
 
 const StyledToday = styled.div`
   background-color: var(--color-grey-0);
@@ -275,7 +275,7 @@ const NoActivity = styled.p`
 function TodayActivity({ results = [] }) {
   if (!Array.isArray(results)) {
     console.error("Invalid results:", results);
-    return <ErrorFallback />;
+    return <Empty resource={"todayActivity"} />;
   }
   console.log('results', results)
   return (

@@ -6,6 +6,7 @@ import { HiOutlineBanknotes, HiOutlineBriefcase, HiOutlineCalendarDays, HiOutlin
 
 
 function Stats({ results, isLoading, error }) {
+  if (error ) return console.log('Something is Wrong there !!!') 
 
 
   if (isLoading) return <CircularProgress color="secondary" />

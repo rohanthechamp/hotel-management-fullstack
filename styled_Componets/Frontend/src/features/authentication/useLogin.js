@@ -14,6 +14,8 @@ const useLogin = () => {
         localStorage.setItem("refreshToken", refresh);
         localStorage.setItem("username", username);
         localStorage.setItem("email", email);
+        // document.cookie = "token=" + access;
+
 
         setAuth({
             accessToken: access,

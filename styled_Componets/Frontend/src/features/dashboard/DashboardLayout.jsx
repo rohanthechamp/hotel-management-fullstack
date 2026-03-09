@@ -201,6 +201,7 @@ const DashboardLayout = () => {
   if (error || error1 || error2 || error3) return <ErrorOutlineIcon />;
 
   console.log("saleChatData",saleChatData)
+  
 
 
   return (
@@ -209,7 +210,7 @@ const DashboardLayout = () => {
       {/* DashBoard Metrics */}
       <Stats results={results} />
 
-      {/* TodayActivities like checkin,checkout, */}
+      {/* TodayActivities like checkin,checkout, */} 
       <TodayActivity results={results1} />
 
       {/* stay duration chart (numNights) */}

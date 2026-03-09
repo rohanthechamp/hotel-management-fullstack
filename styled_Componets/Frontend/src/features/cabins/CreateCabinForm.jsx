@@ -43,16 +43,19 @@ const ErrorStyle = styled.span`
 `;
 
 function CreateCabinForm({ cabinData = {}, resetOpenModel }) {
-  // console.log("Cabin data in cabin form - ", cabinData, typeof cabinData);
-  // const [isSubmit, setIsSubmit] = useState(false);
+
   const [preview, setPreview] = useState(null);
+  const { id: EditId, ...otherData } = cabinData;
+ 
+  const isEditId = Boolean(EditId);
+
   useEffect(() => {
     if (isEditId) {
       setPreview(cabinData?.image);
     }
   }, [isEditId, cabinData]);
   // if (isEditId) console.log("data in edit form", EditId);
-  const { id: EditId, ...otherData } = cabinData;
+
   const {
     register,
     handleSubmit,
@@ -69,7 +72,6 @@ function CreateCabinForm({ cabinData = {}, resetOpenModel }) {
 
   // console.log("OTHERDATA", otherData);
 
-  const isEditId = Boolean(EditId);
 
   const isWorking = isEditing || isCreating;
   const imageRegister = register("image", {

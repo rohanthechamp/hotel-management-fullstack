@@ -26,8 +26,6 @@ const TableHeader = styled.header`
 
 const CabinTable = () => {
   const { isLoading, cabins, error } = useCabins();
-
-
   // const [searchParams] = useSearchParams();
   // const filterValue = searchParams.get("discount");
   // const sortValue = searchParams.get("sort");

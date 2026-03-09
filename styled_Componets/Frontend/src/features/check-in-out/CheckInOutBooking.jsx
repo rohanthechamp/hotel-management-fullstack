@@ -11,8 +11,8 @@ import { useCallback } from "react";
 import CheckOutBooking from "./CheckOutBooking";
 import CheckInBooking from "./CheckInBooking";
 import Spinner from "../../ui/Spinner";
-import ErrorFallback from "../../ui/ErrorFallback";
 import { mapObj } from "../../utils/helpers";
+import Empty from "../../ui/Empty";
 // import Button from "../../ui/Button";
 
 const CheckInOutBooking = () => {
@@ -39,7 +39,7 @@ const CheckInOutBooking = () => {
 
   if (singleBookingError || updateBookingError) return (
 
-    <ErrorFallback error={singleBookingError || updateBookingError} />
+    <Empty error={"checkout"} />
 
   );
   return (

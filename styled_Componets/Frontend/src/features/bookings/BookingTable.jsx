@@ -1,21 +1,17 @@
 import BookingRow from "./BookingRow";
 import Table from "../../ui/Table";
 import Menus from "../../ui/Menus";
-import ErrorFallback from "../../ui/ErrorFallback";
+import Empty from "../../ui/Empty";
 import { useBookings } from "./useBookings";
 import Spinner from "../../ui/Spinner";
 import Pagination from "../../ui/Pagination";
+import { bookings } from "../../data/data-bookings";
 
 function BookingTable() {
-  const { isLoading,  results, count , error } = useBookings();
+  const { isLoading, results, count, error } = useBookings();
 
   if (isLoading) return <Spinner />;
-  if (error)
-    return (
-      <ErrorFallback>
-        <p>Failed to Load All Bookings</p>
-      </ErrorFallback>
-    );
+  if (error || !bookings.length) return <Empty resourceName="bookings" />;
 
   console.log(results)
   return (

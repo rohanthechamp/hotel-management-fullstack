@@ -28,7 +28,8 @@ const Cabin = styled.div`
   font-family: sans-serif;
 `;
 
-const Price = styled.div`
+const 
+Price = styled.div`
   font-family: sans-serif;
   font-weight: 600;
 `;
@@ -68,7 +69,7 @@ const CabinRow = ({ cabin }) => {
     });
   }
 
-  // console.log({ Modal, Menus, Table, ConfirmDelete });
+  console.log('CAbin data ',cabin);
 
   if (isCreating || isDeleting) return <Spinner />;
 

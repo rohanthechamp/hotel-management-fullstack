@@ -130,7 +130,7 @@ const DurationChart = ({ data }) => {
  */
 
 
-
+  // 🔥 Convert backend data  to predictable data what we want (critical for Recharts)
   const stayDurationsValue = data.map((item) => ({
     name: item.label,
     count: item.count,

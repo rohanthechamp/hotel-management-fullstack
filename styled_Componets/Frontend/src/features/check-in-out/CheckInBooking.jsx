@@ -2,11 +2,11 @@ import styled, { keyframes } from "styled-components";
 import ButtonGroup from "../../ui/ButtonGroup";
 import Spinner from "../../ui/Spinner";
 
-import ErrorFallback from "../../ui/ErrorFallback";
 
 import { useEffect, useMemo, useState } from "react";
 import Checkbox from "../../ui/Checkbox";
 import { useSetting } from "../settings/useSetting";
+import Empty from "../../ui/Empty";
 
 const Box = styled.div`
   /* Box */
@@ -121,7 +121,7 @@ function CheckInBooking({ data, onCheckIn, isLoading }) {
 
   if (isSettingLoading) return <Spinner />;
 
-  if (isSettingError) return <ErrorFallback />;
+  if (isSettingError) return <Empty resource={'checkin'} />;
 
   console.log(settingsData);
 

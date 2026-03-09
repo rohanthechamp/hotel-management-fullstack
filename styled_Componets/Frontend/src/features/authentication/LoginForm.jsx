@@ -11,8 +11,8 @@ import useLogin from "./useLogin";
 function LoginForm() {
   const { register, handleSubmit, formState: { errors }, reset } = useForm({
     defaultValues: {
-      email: "john@gmail.com",
-      password: "3323inrnndn",
+      email: "demo@example.com",
+      password: "demo12345",
     },
   });
 
@@ -30,6 +30,8 @@ function LoginForm() {
 
     doLogin(formData, {
       onSuccess: () => {
+
+
         reset();
         navigate("/bookings");
       },

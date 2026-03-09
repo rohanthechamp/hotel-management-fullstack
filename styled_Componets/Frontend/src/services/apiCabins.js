@@ -1,8 +1,5 @@
 import { axiosPrivate } from "./axiosClient";
 
-
-// // supabase
-
 export const getCabins = async (sortValue, filterValue, pageValue = 1) => {
     try {
         if (sortValue === "all" && filterValue === "all") {

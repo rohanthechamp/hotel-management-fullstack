@@ -1,6 +1,6 @@
 import styled from "styled-components";
 import { useCurrentUser } from "./useCurrentUser";
-import { Alert, Backdrop, CircularProgress, LinearProgress } from "@mui/material";
+import { Alert, CircularProgress, LinearProgress } from "@mui/material";
 const StyledUserAvatar = styled.div`
   display: flex;
   gap: 1.2rem;
@@ -25,7 +25,7 @@ const Avatar = styled.img`
 const BACKEND_URL = "http://127.0.0.1:8000";
 const UserAvatar = () => {
   const { isLoading, UserData, error } = useCurrentUser();
-  
+
   if (error)
     return <Alert severity="error">Failed to load data. Please refresh.</ Alert>;
 
