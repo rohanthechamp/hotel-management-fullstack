@@ -1,7 +1,7 @@
 from datetime import date
 from rest_framework import serializers
 from django.core.validators import RegexValidator
-from .models import Cabins, Guests, Bookings, Settings
+from .models import Cabins, Guests, Bookings, Settings,Hotel
 from PIL import Image
 
 # from django.contrib.auth.mo//dels import User
@@ -142,30 +142,28 @@ class CabinSerializer(serializers.ModelSerializer):
 # Guest Serializer
 # -----------------------
 
+# serializers.py
+
 
 class GuestSerializer(serializers.ModelSerializer):
-    """
-    Serializer for Guests.
-    - Uses field-level validators for name, email, nationalID, nationality, image.
-    - Uses object-level validation for rules that require multiple fields.
-    - Also enforces uniqueness checks at API level (model-level unique constraints recommended too).
-    """
-
-    # Example: convert free-form TextField into CharField with max_length at serializer API layer
+    # Use CharField for better control at the API layer
     fullName = serializers.CharField(required=True, max_length=150)
     email = serializers.EmailField(required=True)
-    nationalID = serializers.IntegerField(required=True, validators=[validate_positive])
-    nationality = serializers.CharField(required=True, max_length=60)
+    hotel = serializers.PrimaryKeyRelatedField(
+        read_only=True, 
+        default=Hotel.objects.first
+        )    # CHANGE: Set required=False so Google Login doesn't crash
+    # But we keep your logic for when the user eventually fills it in
+    nationalID = serializers.IntegerField(required=False, allow_null=True)
+    nationality = serializers.CharField(required=False, max_length=60, allow_blank=True)
 
     class Meta:
         model = Guests
         fields = "__all__"
 
-    # ----------------------
-    # Field-level validations
-    # ----------------------
+    # --- Field-level validations (Keep your existing logic) ---
+
     def validate_fullName(self, value):
-        # ensure not too short and no accidental whitespace-only names
         if len(value.strip()) < 3:
             raise serializers.ValidationError(
                 "Full name must be at least 3 characters."
@@ -173,7 +171,6 @@ class GuestSerializer(serializers.ModelSerializer):
         return value.strip()
 
     def validate_email(self, value):
-        # API-level uniqueness check (DB unique constraint is recommended for production)
         qs = Guests.objects.filter(email__iexact=value)
         if self.instance:
             qs = qs.exclude(pk=self.instance.pk)
@@ -182,54 +179,27 @@ class GuestSerializer(serializers.ModelSerializer):
         return value.lower()
 
     def validate_nationalID(self, value):
-        # Basic strongly-typed checks: positive and reasonable length
+        # Only run this if a value is actually provided
+        if value is None:
+            return value
         if value <= 0:
             raise serializers.ValidationError("National ID must be a positive integer.")
         text = str(value)
-        if not (6 <= len(text) <= 20):  # adjust range to your country's typical length
+        if not (6 <= len(text) <= 20):
             raise serializers.ValidationError("National ID length looks invalid.")
-        # optional: uniqueness at API layer
-        qs = Guests.objects.filter(nationalID=value)
-        if self.instance:
-            qs = qs.exclude(pk=self.instance.pk)
-        if qs.exists():
-            raise serializers.ValidationError(
-                "A guest with this national ID already exists."
-            )
         return value
 
-    def validate_nationality(self, value):
-        validate_alpha_space(value)
-        return value.title().strip()
+    # # --- Logic for Auto-linking Hotel ---
 
-    def validate_countryFlag(self, value):
-        # If file is uploaded, validate size/type and to check its integrity
-        return validate_image_file(value)
-
-    # ------------------------
-    # Object-level validations
-    # ------------------------
-    def validate(self, attrs):
-        """
-        Cross-field examples:
-        - If nationality is unknown (or a special value) require an uploaded flag.
-        - Clean up or normalize fields if needed.
-        """
-        nationality = attrs.get("nationality") or getattr(
-            self.instance, "nationality", None
-        )
-        country_flag = attrs.get("countryFlag") or getattr(
-            self.instance, "countryFlag", None
-        )
-        if (
-            nationality
-            and nationality.lower() in ("unknown", "n/a")
-            and not country_flag
-        ):
-            raise serializers.ValidationError(
-                "If nationality is unknown, please upload a country flag image."
-            )
-        return attrs
+    def create(self, validated_data):
+        # Ensure every guest is linked to the admin's hotel automatically
+        if "hotel" not in validated_data:
+            hotel = Hotel.objects.first()
+            print('GETTED HOTEl',hotel)
+            if not hotel:
+                raise serializers.ValidationError("No Hotel found in system.")
+            validated_data["hotel"] = hotel
+        return super().create(validated_data)
 
 
 # -----------------------

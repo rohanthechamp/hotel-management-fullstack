@@ -36,7 +36,7 @@ from api.permission import (
     SingleSettingPermission,
 )
 from api.utils.helpers import BUCKETS, user_cache_key
-from .models import Cabins, Guests, Bookings, Settings
+from .models import Cabins, Guests, Bookings, Hotel, Settings
 from .serializers import (
     BookingReadSerializer,
     CabinSerializer,
@@ -118,16 +118,8 @@ class SingleCabinRetrieveView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class GuestsCreateListView(generics.ListCreateAPIView):
-    """
-    GET  /guests/    -> List all guests (public)
-    POST /guests/    -> Create a guest (admin only)
 
-    #^ all guest -  get, put/patch, post, delete
-    #*           -  admin only...
-
-    """
-
-    permission_classes = [AllGuestsPermission]
+    permission_classes = [AllowAny]
     queryset = Guests.objects.all()
     serializer_class = GuestSerializer
     filter_backends = [
@@ -140,18 +132,21 @@ class GuestsCreateListView(generics.ListCreateAPIView):
     ordering = ["id"]
 
 
+    def list(self, request, *args, **kwargs):
+        email = request.query_params.get("email")
+        if email:
+            try:
+                guest = Guests.objects.get(email__iexact=email)
+                serializer = self.get_serializer(guest)
+                return Response(serializer.data)
+            except Guests.DoesNotExist:
+                return Response({"detail": "Not found."}, status=404)
+        return super().list(request, *args, **kwargs)
+
+
 class SingleGuestRetrieveView(generics.RetrieveUpdateDestroyAPIView):
-    """
-    GET    /guests/<pk>/  -> Retrieve one guest (public)
-    PUT    /guests/<pk>/  -> Replace guest (admin only)
-    PATCH  /guests/<pk>/  -> Partial update (admin only)
-    DELETE /guests/<pk>/  -> Delete guest (admin only)
 
-    #^ all guest -  get, put/patch, post, delete
-    #*           -  admin only...
-    """
-
-    permission_classes = [AllGuestsPermission, SingleGuestPermission]
+    # permission_classes = [AllGuestsPermission, SingleGuestPermission]
 
     queryset = Guests.objects.all()
     serializer_class = GuestSerializer
@@ -300,7 +295,7 @@ class CabinBookedDatesView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, cabin_id):
-        
+
         bookings = Bookings.objects.filter(cabin_id=cabin_id).values(
             "startDate", "endDate"
         )

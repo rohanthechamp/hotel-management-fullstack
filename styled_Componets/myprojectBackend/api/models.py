@@ -69,9 +69,9 @@ class Guests(models.Model):
     created_at = models.DateField(auto_now_add=True, db_index=True)
     fullName = models.TextField(db_index=True, blank=False, null=False)
     email = models.EmailField(blank=False, null=False, db_index=True)
-    nationalID = models.BigIntegerField(blank=False, null=False, db_index=True)
-    nationality = models.TextField(blank=False, null=False)
-    countryFlag = models.ImageField(upload_to="users/%Y/%m/%d", blank=True)
+    nationalID = models.BigIntegerField(blank=True, null=True, db_index=True)
+    nationality = models.TextField(blank=True, null=True)
+    countryFlag = models.ImageField(upload_to="users/%Y/%m/%d", blank=True) 
     hotel = models.ForeignKey(to=Hotel, on_delete=models.CASCADE, related_name="guests")
 
     # ^ foreign  relationship with Bookings
