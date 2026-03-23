@@ -1,6 +1,8 @@
 from django.urls import path
 from .views import (
+    BookingMinimalView,
     CabinCreateListView,
+    GuestBookingsView,
     HomeView,
     SingleCabinRetrieveView,
     GuestsCreateListView,
@@ -28,8 +30,12 @@ urlpatterns = [
     path("bookings/read/", BookingReadView.as_view()),
     path("settings/", SettingsCreateListView.as_view()),
     path("settings/<int:pk>/", SingleSettingsView.as_view()),
+    path("bookings/<int:id>/minimal/", BookingMinimalView.as_view()),
+    
+    path("guests/<int:guest_id>/bookings/", GuestBookingsView.as_view(), name="guest-bookings"),
     # custom views
     path("", HomeView.as_view(), name="home"),
+    
     # dashboard data
     path("dashboard/bookings/", GetBookingsLastXDaysView.as_view()),
     path("dashboard/activities/today-summary/", GetTodayActivitiesView.as_view()),

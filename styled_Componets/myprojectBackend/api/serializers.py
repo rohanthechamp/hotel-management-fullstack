@@ -1,65 +1,13 @@
-from datetime import date
 from rest_framework import serializers
-from django.core.validators import RegexValidator
-from .models import Cabins, Guests, Bookings, Settings,Hotel
-from PIL import Image
-
-# from django.contrib.auth.mo//dels import User
-from django.contrib.auth import get_user_model
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-
-
-# -----------------------
-# Reusable validators
-# -----------------------
-
-
-def validate_positive(value):
-    """Reusable check: value must be > 0."""
-    if value is None or value <= 0:
-        raise serializers.ValidationError("Value must be greater than zero.")
-
-
-def validate_positive_type(value):
-    """Reusable check: value must be > 0."""
-    if value is None or value < 0:
-        raise serializers.ValidationError("Value must be positive .")
-
-
-def validate_alpha_space(value):
-    """Reusable check: only letters and spaces allowed (good for nationality / names)."""
-    alpha_space = RegexValidator(r"^[A-Za-z\s]+$")
-    try:
-        alpha_space(value)
-    except Exception:
-        raise serializers.ValidationError(
-            "This field may only contain letters and spaces."
-        )
-
-
-def validate_image_file(value):
-    """
-    Production-level image validation for countryFlag field:
-    1. Ensures file is actually an image (not just renamed file).
-    2. Accepts only JPEG and PNG formats.
-    3. Limits file size to 2MB.
-    """
-    # Check size
-    max_size = 2 * 1024 * 1024  # 2 MB
-    if hasattr(value, "size") and value.size > max_size:
-        raise serializers.ValidationError("Image must be smaller than 2MB.")
-
-    # Check content and format
-    try:
-        img = Image.open(value)
-        img.verify()  # verify that it is a valid image
-    except Exception:
-        raise serializers.ValidationError("Uploaded file is not a valid image.")
-
-    if img.format.upper() not in ["JPEG", "PNG"]:
-        raise serializers.ValidationError("Only JPEG and PNG images are allowed.")
-
-    return value
+from api.validators import (
+    validate_image_file,
+    validate_national_id,
+    validate_positive,
+    validate_positive_type,
+    validate_secure_image_url,
+)
+from .models import Cabins, Guests, Bookings, Settings, Hotel
+from django.db import transaction, DatabaseError
 
 
 # -----------------------
@@ -150,11 +98,12 @@ class GuestSerializer(serializers.ModelSerializer):
     fullName = serializers.CharField(required=True, max_length=150)
     email = serializers.EmailField(required=True)
     hotel = serializers.PrimaryKeyRelatedField(
-        read_only=True, 
-        default=Hotel.objects.first
-        )    # CHANGE: Set required=False so Google Login doesn't crash
+        read_only=True, default=Hotel.objects.first
+    )  # CHANGE: Set required=False so Google Login doesn't crash
     # But we keep your logic for when the user eventually fills it in
-    nationalID = serializers.IntegerField(required=False, allow_null=True)
+    nationalID = serializers.CharField(
+        validators=[validate_national_id], required=False, allow_null=True
+    )
     nationality = serializers.CharField(required=False, max_length=60, allow_blank=True)
 
     class Meta:
@@ -162,6 +111,8 @@ class GuestSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     # --- Field-level validations (Keep your existing logic) ---
+    def validate_countryFlag(self, value):
+        return validate_secure_image_url(value)
 
     def validate_fullName(self, value):
         if len(value.strip()) < 3:
@@ -179,15 +130,8 @@ class GuestSerializer(serializers.ModelSerializer):
         return value.lower()
 
     def validate_nationalID(self, value):
-        # Only run this if a value is actually provided
-        if value is None:
-            return value
-        if value <= 0:
-            raise serializers.ValidationError("National ID must be a positive integer.")
-        text = str(value)
-        if not (6 <= len(text) <= 20):
-            raise serializers.ValidationError("National ID length looks invalid.")
-        return value
+        # This calls your standalone function and returns the value
+        return validate_national_id(value)
 
     # # --- Logic for Auto-linking Hotel ---
 
@@ -195,7 +139,7 @@ class GuestSerializer(serializers.ModelSerializer):
         # Ensure every guest is linked to the admin's hotel automatically
         if "hotel" not in validated_data:
             hotel = Hotel.objects.first()
-            print('GETTED HOTEl',hotel)
+            print("GETTED HOTEl", hotel)
             if not hotel:
                 raise serializers.ValidationError("No Hotel found in system.")
             validated_data["hotel"] = hotel
@@ -205,16 +149,48 @@ class GuestSerializer(serializers.ModelSerializer):
 # -----------------------
 # Booking Serializer (Write)
 # -----------------------
+class GuestAllBookingSerializer(serializers.ModelSerializer):
+    guest = serializers.PrimaryKeyRelatedField(read_only=True)
 
+    # flatten only required cabin fields
+    cabin = serializers.SerializerMethodField()
 
+    class Meta:
+        model = Bookings
+        fields = (
+            "id",
+            "guest",
+            "startDate",
+            "endDate",
+            "numNights",
+            "totalPrice",
+            "numGuests",
+            "status",
+            "created_at",
+            "cabin",
+        )
+
+    def get_cabin(self, obj):
+        return {
+            "name": obj.cabin.name,
+            "image": obj.cabin.image,
+        }
 class BookingReadSerializer(serializers.ModelSerializer):
-
     guest = GuestSerializer(read_only=True)
     cabin = CabinSerializer(read_only=True)
 
     class Meta:
         model = Bookings
         fields = "__all__"
+# class BookingReadSerializer(serializers.ModelSerializer):
+
+#     cabin = CabinSerializer(read_only=True)
+#     guest = serializers.PrimaryKeyRelatedField(read_only=True)
+
+
+#     class Meta:
+#         model = Bookings
+#         fields =("id","startDate","endDate","numNights","totalPrice","numGuests","status","created_at")
 
 
 class BookingWriteSerializer(serializers.ModelSerializer):
@@ -237,6 +213,7 @@ class BookingWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bookings
         fields = "__all__"
+        read_only_fields = ("hotel", "status", "isPaid", "totalPrice", "cabinPrice")
 
     # ----------------------
     # Field-level validations

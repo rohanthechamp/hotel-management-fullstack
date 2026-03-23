@@ -4,6 +4,8 @@ from datetime import datetime
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 
+from api.validators import validate_secure_image_url
+
 
 class Hotel(models.Model):
     # name ,address,staff,logo,email,    foreign key to every   field
@@ -71,7 +73,9 @@ class Guests(models.Model):
     email = models.EmailField(blank=False, null=False, db_index=True)
     nationalID = models.BigIntegerField(blank=True, null=True, db_index=True)
     nationality = models.TextField(blank=True, null=True)
-    countryFlag = models.ImageField(upload_to="users/%Y/%m/%d", blank=True) 
+    countryFlag = models.URLField(
+        max_length=500, null=True, blank=True, validators=[validate_secure_image_url]
+    )
     hotel = models.ForeignKey(to=Hotel, on_delete=models.CASCADE, related_name="guests")
 
     # ^ foreign  relationship with Bookings
@@ -92,7 +96,11 @@ class Bookings(models.Model):
         UNCONFIRMED = "unconfirmed", "Unconfirmed"
 
     user = models.ForeignKey(
-        to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="booking"
+        to=settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name="bookings_handled",
+        null=True,
+        blank=True,
     )
     created_at = models.DateField(db_index=True)
     startDate = models.DateField(db_index=True)
@@ -115,10 +123,11 @@ class Bookings(models.Model):
     status = models.CharField(
         blank=False,
         null=False,
+        choices=BookingStatusChoices.choices,
         default=BookingStatusChoices.UNCONFIRMED,
     )
-    isPaid = models.BooleanField(blank=False, null=False)
-    observations = models.TextField()
+    isPaid = models.BooleanField(default=False,blank=False, null=False)
+    observations = models.TextField(max_length=500,blank=True)
 
     # ^ foreign key relationship with Cabins Table
     cabin = models.ForeignKey(

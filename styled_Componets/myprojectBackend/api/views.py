@@ -2,12 +2,14 @@ from ast import BoolOp
 from datetime import timedelta
 import stat
 from urllib import response
+from webbrowser import get
 from django.db.models import Sum
 from django.db.models import Q, F
 from collections import defaultdict
 from django.db.models.functions import TruncDate
 
 # from time import timezone
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from warnings import filters
 from rest_framework import generics, filters
@@ -17,10 +19,11 @@ from rest_framework.permissions import (
     IsAuthenticatedOrReadOnly,
     AllowAny,
 )
+from django.db import transaction, DatabaseError
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from django_filters.rest_framework import DjangoFilterBackend
-from sqlalchemy import true
+from sqlalchemy import Transaction, null, true
 from api.filters import PaidBookings, RecentPaidBookings
 from api.pagination import CustomPagination
 from api.permission import (
@@ -41,6 +44,7 @@ from .serializers import (
     BookingReadSerializer,
     CabinSerializer,
     GetBookingsLastXDaysSerializer,
+    GuestAllBookingSerializer,
     GuestSerializer,
     BookingWriteSerializer,
     SettingsSerializer,
@@ -54,6 +58,7 @@ from django.utils import timezone
 
 from django.core.cache import cache
 
+from rest_framework.exceptions import ValidationError
 
 # ----------------------------------------------------------
 # *📌 CABINS
@@ -115,6 +120,30 @@ class SingleCabinRetrieveView(generics.RetrieveUpdateDestroyAPIView):
 # ----------------------------------------------------------
 # *👤 GUESTS
 # ----------------------------------------------------------
+class GuestBookingsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, guest_id):
+
+        bookings = (
+            Bookings.objects.filter(guest_id=guest_id)
+            .select_related("cabin")
+            .values(
+                "id",
+                "guest_id",
+                "startDate",
+                "endDate",
+                "numNights",
+                "totalPrice",
+                "numGuests",
+                "status",
+                "created_at",
+                "cabin__name",
+                "cabin__image",
+            )
+        )
+
+        return Response(list(bookings))
 
 
 class GuestsCreateListView(generics.ListCreateAPIView):
@@ -131,7 +160,6 @@ class GuestsCreateListView(generics.ListCreateAPIView):
     ordering_fields = ["created_at"]
     ordering = ["id"]
 
-
     def list(self, request, *args, **kwargs):
         email = request.query_params.get("email")
         if email:
@@ -147,6 +175,7 @@ class GuestsCreateListView(generics.ListCreateAPIView):
 class SingleGuestRetrieveView(generics.RetrieveUpdateDestroyAPIView):
 
     # permission_classes = [AllGuestsPermission, SingleGuestPermission]
+    permission_classes = [AllowAny]
 
     queryset = Guests.objects.all()
     serializer_class = GuestSerializer
@@ -165,7 +194,8 @@ class BookingsCreateListView(generics.ListCreateAPIView):
     #*           -  public -   authenticated/staff user
     """
 
-    permission_classes = [AllBookingsPermission]
+    # permission_classes = [AllBookingsPermission]
+    permission_classes = [AllowAny]
 
     queryset = Bookings.objects.prefetch_related("cabin", "guest").all()
     # filterset_class = BookingFilter
@@ -179,9 +209,9 @@ class BookingsCreateListView(generics.ListCreateAPIView):
 
     pagination_class = CustomPagination
 
-    def get_permissions(self):
-        """Allow public GET, admin-only POST."""
-        return [IsAdminUser()] if self.request.method == "POST" else [IsAuthenticated()]
+    # def get_permissions(self):
+    #     """Allow public GET, admin-only POST."""
+    #     return [IsAdminUser()] if self.request.method == "POST" else [IsAuthenticated()]
 
     def get_queryset(self):
         queryset = self.queryset
@@ -203,6 +233,48 @@ class BookingsCreateListView(generics.ListCreateAPIView):
         return queryset
 
 
+
+
+
+    def perform_create(self, serializer):
+
+        with transaction.atomic():
+
+            cabin_id = self.request.data["cabin"]
+
+            # Locking the cabin row
+            cabin = Cabins.objects.select_for_update().get(id=cabin_id)
+
+            start_date = serializer.validated_data["startDate"]
+            end_date = serializer.validated_data["endDate"]
+            num_nights = serializer.validated_data["numNights"]
+            extras_price = serializer.validated_data.get("extrasPrice", 0)
+
+            # Check overlapping bookings
+            overlapping_booking = Bookings.objects.filter(
+                cabin_id=cabin_id,
+                status__in=["checked-in", "unconfirmed"],
+                startDate__lt=end_date,
+                endDate__gt=start_date,
+            ).exists()
+
+            if overlapping_booking:
+                raise ValidationError("Cabin already booked for these dates.")
+
+            # -------- PRICE CALCULATION --------
+            base_price = cabin.regularPrice - cabin.discount
+            total_price = (base_price * num_nights) + extras_price
+            # -----------------------------------
+
+            hotel = Hotel.objects.first()
+
+            serializer.save(
+                hotel=hotel,
+                totalPrice=total_price,
+                cabinPrice=cabin.regularPrice,
+            )
+
+
 class SingleBookingRetrieveView(generics.RetrieveUpdateDestroyAPIView):
     """
     GET    /bookings/<pk>/  -> Retrieve one booking (public)
@@ -220,10 +292,14 @@ class SingleBookingRetrieveView(generics.RetrieveUpdateDestroyAPIView):
     #     CheckOUTBookingPermission,
     #     CancelBookingPermission,
     # ]
+
     permission_classes = [AllowAny]
 
     queryset = Bookings.objects.select_related("cabin", "guest").all()
-    serializer_class = BookingWriteSerializer
+    serializer_class = BookingReadSerializer
+
+    
+
 
 
 # ----------------------------------------------------------
@@ -278,12 +354,41 @@ class SingleSettingsView(generics.RetrieveUpdateDestroyAPIView):
 #     return JsonResponse({"data": serializer.data})
 class BookingReadView(APIView):
     # permission_classes = (IsAuthenticated)
+    permission_classes = [AllowAny]
 
     def get(self, request):
+        int(request.query_params.get("bookingID", 90))
         bookingID = int(request.query_params.get("bookingID", 90))
         bookingData = Bookings.objects.filter(id=bookingID).first()
         serializer = BookingReadSerializer(bookingData)
+
         return Response(serializer.data)
+
+
+class BookingMinimalView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, id):
+        booking_id = id
+
+        if not booking_id:
+            return Response({"error": "bookingID is required"}, status=400)
+
+        try:
+            booking_id = int(booking_id)
+        except ValueError:
+            return Response({"error": "Invalid bookingID"}, status=400)
+
+        data = (
+            Bookings.objects.filter(id=booking_id)
+            .values("observations", "numGuests","cabin__maxCapacity")
+            .first()
+        )
+
+        if not data:
+            return Response({"error": "Booking not found"}, status=404)
+
+        return Response(data)
 
 
 class CabinBookedDatesView(APIView):
