@@ -17,8 +17,8 @@ POST http://127.0.0.1:8000/users/login/ HTTP/1.1
 Content-Type: application/json
 
 {
-  "email": "rohan@gmail.com",
-  "password": "1234rohan@"
+  "email": "alen@gmail.com",
+  "password": "alen1234"
 }
 
 ####
@@ -31,7 +31,7 @@ POST http://127.0.0.1:8000/users/token/refresh/ HTTP/1.1
 Content-Type: application/json
 
 {
-  "refresh":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY3MjcyMTM3LCJpYXQiOjE3NjcyNzE1MzcsImp0aSI6Ijk2NmQ4YjM3NGE2MzRiNDlhMjlhMDQ3NmMxYzJlODE0IiwidXNlcl9pZCI6IjcifQ.GVDoVgwWNW9B7Cr14n4OMeYymHaYRbntxyKhKrUKE7g"
+  "refresh":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc3NjgzNzQ4MSwiaWF0IjoxNzc2NzUxMDgxLCJqdGkiOiJhY2IyNmY3YTc2YzQ0ZTMzYTEyMGE4NGU1ZWJjNTgxOCIsInVzZXJfaWQiOiIxIn0.BVRYAc6gHmDF1eGxCxwd_qxKDeYaM_7q4Ju8S1Lq30M"
 }
 
 ###
@@ -148,9 +148,9 @@ Content-Type: application/json
 }
 
 ####
-GET  http://127.0.0.1:8000/api/dashboard/bookings/ HTTP/1.1
+GET    http://127.0.0.1:8000/api/bookings/2017/minimal/ HTTP/1.1
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY3Mjc1NDQ1LCJpYXQiOjE3NjcyNzQ4NDUsImp0aSI6IjQxMWY3NzYwMzRkNzRjZmY5ODliYzJkN2JjOGMwOGNjIiwidXNlcl9pZCI6IjcifQ.M3K9l1lmyDGdpYIsb3isZV3KGufqjCwYlYCJIuqEqgE
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc0MzU0OTM2LCJpYXQiOjE3NzQzNTQzMzYsImp0aSI6IjliNGVkMDkxYjc1MzQ1ZjI5MTcwMDVmOThmMjkyNmZjIiwidXNlcl9pZCI6IjYifQ.2Cu63Ac7QV2SLIHN8X__GmAUrrnYvh5qoeXUIzdN2Ec
 
 
 ####
@@ -174,7 +174,7 @@ Content-Type: application/json
 # Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY3NDY0MjEwLCJpYXQiOjE3Njc0NjM2MTAsImp0aSI6ImJjNTI4MDg3ZjM0NTRhYjI4ZDg4YjdiMDU3NzU1NWM2IiwidXNlcl9pZCI6IjExIn0.bAyiYTwMantyK2fou2iPiEA8Do7VcEKUY_pl-oOTEio
 #####
 
-GET  http://127.0.0.1:8000/api/dashboard/bookings/ HTTP/1.1
+GET  http://127.0.0.1:8000/api/dashboard/bookings/1001 HTTP/1.1
 Content-Type: application/json
 # Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY3NjM0OTg2LCJpYXQiOjE3Njc2MzQzODcsImp0aSI6ImU2YTI1Yjk1YTBkOTRlNTQ5MmU1Njk5YTE1OTY1NjQwIiwidXNlcl9pZCI6IjEifQ.Lg7aFUVB8DwhIWmlSziYXoei4wzGZm55A-bPevMJkr4
 #####
@@ -196,3 +196,8 @@ Content-Type: application/json
 ####
 # GET  http://127.0.0.1:8000/api/dashboard/revenue/daily/? HTTP/1.1
 # Content-Type: application/json
+
+
+#####
+DELETE   http://127.0.0.1:8000/api/bookings/2055/?guestId=1001 HTTP/1.1
+Content-Type: application/json

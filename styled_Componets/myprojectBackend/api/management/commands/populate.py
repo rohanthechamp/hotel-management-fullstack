@@ -8,7 +8,8 @@ from django.contrib.auth import get_user_model
 from faker import Faker
 from sqlalchemy import false
 
-from api.models import Cabins, Guests, Bookings, Hotel, Settings
+from api.models import Cabins, Guests, Bookings, Settings
+from users.models import Hotel
 
 fake = Faker()
 
@@ -70,6 +71,13 @@ class Command(BaseCommand):
                 "address": "xyz street , Los Angeles, USA",
             },
         )
+
+        # ---------------------------------------------------
+        # 3️⃣ Bind  admin to  hotel
+        # ---------------------------------------------------
+
+        our_hotel.admin = demo_user
+        our_hotel.save()
 
         # ---------------------------------------------------
         # 3️⃣ Bind hotel to admin

@@ -3,34 +3,11 @@ from django.db import models
 from datetime import datetime
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
-
+from sqlalchemy import true
+from django.db.models import Index
+from django.db.models.functions import Upper
 from api.validators import validate_secure_image_url
-
-
-class Hotel(models.Model):
-    # name ,address,staff,logo,email,    foreign key to every   field
-    created_at = models.DateTimeField(auto_now_add=True)
-    startDate = models.DateField(db_index=True)
-
-    name = models.CharField(
-        max_length=200,
-        blank=False,
-        null=False,
-    )
-    email = models.EmailField(unique=True)
-    address = models.TextField(blank=False, null=False)
-    staffCapacity = models.IntegerField(
-        blank=False,
-        null=False,
-        validators=[MinValueValidator(1), MaxValueValidator(1000)],
-        default=100,
-    )
-    logo = models.ImageField(
-        upload_to="hotels/logos/",
-        blank=True,
-        null=True,
-        default="defaults/low-light.png",
-    )
+from users.models import Hotel
 
 
 class Cabins(models.Model):
@@ -49,7 +26,7 @@ class Cabins(models.Model):
         max_digits=20, decimal_places=2, blank=False, null=False
     )
     discount = models.DecimalField(
-        max_digits=20, decimal_places=2, blank=True, null=True
+        max_digits=20, decimal_places=2, blank=True, null=True, db_index=True
     )
     observations = models.TextField()
     image = models.ImageField(upload_to="users/%Y/%m/%d", blank=True)
@@ -68,10 +45,10 @@ class Cabins(models.Model):
 
 
 class Guests(models.Model):
-    created_at = models.DateField(auto_now_add=True, db_index=True)
-    fullName = models.TextField(db_index=True, blank=False, null=False)
+    created_at = models.DateField(auto_now_add=True)
+    fullName = models.TextField(blank=False, null=False)
     email = models.EmailField(blank=False, null=False, db_index=True)
-    nationalID = models.BigIntegerField(blank=True, null=True, db_index=True)
+    nationalID = models.BigIntegerField(blank=True, null=True)
     nationality = models.TextField(blank=True, null=True)
     countryFlag = models.URLField(
         max_length=500, null=True, blank=True, validators=[validate_secure_image_url]
@@ -86,6 +63,20 @@ class Guests(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(
+                # Use 'expressions' instead of 'fields' for functions
+                fields=["email"],
+                name="guest_email_lookup_idx",
+                include=[
+                    "fullName", 
+                    "hotel", 
+                    "nationalID", 
+                    "nationality", 
+                    "countryFlag"
+                ]
+            ),
+        ]
 
 
 # Create your models here.
@@ -102,9 +93,9 @@ class Bookings(models.Model):
         null=True,
         blank=True,
     )
-    created_at = models.DateField(db_index=True)
-    startDate = models.DateField(db_index=True)
-    endDate = models.DateField(db_index=True)
+    created_at = models.DateField()
+    startDate = models.DateField()
+    endDate = models.DateField()
     numNights = models.IntegerField(
         blank=False, null=False, validators=[MinValueValidator(1), MaxValueValidator(7)]
     )
@@ -123,11 +114,12 @@ class Bookings(models.Model):
     status = models.CharField(
         blank=False,
         null=False,
+        db_index=True,
         choices=BookingStatusChoices.choices,
         default=BookingStatusChoices.UNCONFIRMED,
     )
-    isPaid = models.BooleanField(default=False,blank=False, null=False)
-    observations = models.TextField(max_length=500,blank=True)
+    isPaid = models.BooleanField(default=False, blank=False, null=False)
+    observations = models.TextField(max_length=500, blank=True)
 
     # ^ foreign key relationship with Cabins Table
     cabin = models.ForeignKey(
@@ -152,6 +144,14 @@ class Bookings(models.Model):
             ("checkin_guest", "Can check in guest"),
             ("checkout_guest", "Can check out guest"),
             ("cancel_booking", "Can cancel booking"),
+        ]
+        indexes = [
+            
+            models.Index(
+                fields=['created_at'], 
+                name='booking_date_metrics_idx',
+                include=['totalPrice'] 
+            ),
         ]
 
 

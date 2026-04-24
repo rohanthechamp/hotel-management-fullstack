@@ -314,7 +314,7 @@ class SettingsSerializer(serializers.ModelSerializer):
     Settings serializer: light validation ensuring min/max logic is coherent.
     """
 
-    minBookingLength = serializers.IntegerField(validators=[validate_positive])
+    minBookingLength  = serializers.IntegerField(validators=[validate_positive])
     maxBookingLength = serializers.IntegerField(validators=[validate_positive])
     minGuestsPerBooking = serializers.IntegerField(validators=[validate_positive])
     breakfastPrice = serializers.DecimalField(max_digits=20, decimal_places=2)

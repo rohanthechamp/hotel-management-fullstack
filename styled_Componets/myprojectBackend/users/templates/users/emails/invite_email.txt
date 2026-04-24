@@ -1,0 +1,6 @@
+You're invited to join {{ hotel_name }}
+
+Click here:
+{{ invite_link }}
+
+This link expires in 2 days.

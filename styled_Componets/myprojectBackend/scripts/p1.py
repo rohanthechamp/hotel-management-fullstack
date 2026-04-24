@@ -26,7 +26,7 @@ from django.utils import timezone
 from api.utils.helpers import BUCKETS
 
 
-def run():
+# def run():
 
     # cutoff_date = timezone.now().date() - timezone.timedelta(days=90)
     # LastXDaysBooking= (
@@ -107,25 +107,25 @@ def run():
     # Bookings.objects.filter(datefilter ,numNights=minValue || numNights=maxValue ).count
 
     # print(stayDurationData)
-    today = timezone.now().date()
-    cutoff = today - timezone.timedelta(days=28)
-    date_q = (
-        Q(created_at__gte=cutoff)
-        & Q(created_at__lte=today)
-        & Q(status="checked-out")
-        & Q(isPaid=True)
-    )  # * base filter
+    # today = timezone.now().date()
+    # cutoff = today - timezone.timedelta(days=28)
+    # date_q = (
+    #     Q(created_at__gte=cutoff)
+    #     & Q(created_at__lte=today)
+    #     & Q(status="checked-out")
+    #     & Q(isPaid=True)
+    # )  # * base filter
 
-    allBookings = (
-        Bookings.objects.filter(date_q)
-        .annotate(day=TruncDate("created_at"))
-        .values("day")
-        .annotate(
-            extraSales=Sum("extrasPrice"),
-            totalSales=Sum("totalPrice"),
-        )
-        .order_by("day")[:5]
-    )
+    # allBookings = (
+    #     Bookings.objects.filter(date_q)
+    #     .annotate(day=TruncDate("created_at"))
+    #     .values("day")
+    #     .annotate(
+    #         extraSales=Sum("extrasPrice"),
+    #         totalSales=Sum("totalPrice"),
+    #     )
+    #     .order_by("day")[:5]
+    # )
 
     # checkins = allBookings.filter(status="checked-in").aggregate(
     #     totalCheckIns=Count("id")
@@ -136,7 +136,7 @@ def run():
     #     extraSales=Sum("extrasPrice"),
     #     totalSales=Sum("totalPrice"),
     # ).values("startDate")
-    print("summery ", allBookings)
+    # print("summery ", allBookings)
 
     # print(f"Cabins: {cabins}, Total Check-ins: {totalcheckins}")
 
@@ -145,3 +145,62 @@ def run():
     #     f"Total Sales : {summary["totalSales"]} and totalBookings: {summary["totalBookings"]}"
     # )
     # print(Bookings.objects.all().count())
+
+import time
+from django.db import connection, reset_queries
+from api.models import Cabins
+
+def run():
+    # Clear previous query logs
+    # reset_queries()
+    
+    # # Method 1: .all().count()
+    # start_time = time.time()
+    # count1 = Cabins.objects.all().count()
+    # end_time = time.time()
+    
+    # print(f"--- Method 1 (.all().count()) --- Cabins.objects.all().count() ")
+    # print(f"Result: {count1}")
+    # print(f"Time: {end_time - start_time:.4f} seconds")
+    # print(f"SQL: {connection.queries[-1]['sql']}\n")
+
+    # # Clear logs for second test
+    # reset_queries()
+
+    # # Method 2: .count()
+    # start_time = time.time()
+    # count2 = Cabins.objects.count()
+    # end_time = time.time()
+
+    # print(f"--- Method 2 (.count()) --- Cabins.objects.count()")
+    # print(f"Result: {count2}")
+    # print(f"Time: {end_time - start_time:.4f} seconds")
+    # print(f"SQL: {connection.queries[-1]['sql']}\n")
+    # queryset = Bookings.objects.filter(status='confirmed').annotate(total=Sum('price'))
+        
+    #     # This returns the execution plan as a string
+    # plan = queryset.explain(analyze=True)
+    # print(plan)
+    today = timezone.localdate()
+    reqFilter = Q(
+            startDate__lte=today,
+            endDate__gte=today,
+            status__in=["checked-in", "checked-out", "unconfirmed"],
+        )
+
+    todayActivities = (
+            Bookings.objects.filter(reqFilter)
+            .select_related("guest")
+            .only(
+                "id",
+                "guest__fullName",
+                "guest__countryFlag",
+                "guest__nationality",
+                "status",
+                "numNights",
+            )
+            .order_by("startDate", "status")[:20]
+        )
+    
+    plan = todayActivities.explain(analyze=True)
+    print(plan)

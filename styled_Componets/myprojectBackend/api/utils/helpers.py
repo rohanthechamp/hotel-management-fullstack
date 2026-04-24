@@ -38,7 +38,10 @@
 #         raise serializers.ValidationError("Only JPEG and PNG images are allowed.")
 
 #     return value
+import string
+
 from django.db.models import Q
+
 # from .models import ExpenseModel
 import json
 from django.db.models import Sum, Q, QuerySet, OuterRef, F, Subquery
@@ -54,6 +57,7 @@ import logging
 from dateutil.relativedelta import relativedelta
 from django.db.models.functions import TruncDay
 import calendar
+
 # from myapp.models import Budget
 # import pandas as pd
 # import matplotlib.pyplot as plt
@@ -62,7 +66,10 @@ import calendar
 # from myapp.models import ExpenseModel, Income, Budget
 from typing import List, Optional
 from django.contrib.auth.models import User
+
+
 import traceback
+
 # from tablib import Dataset
 import re
 
@@ -77,13 +84,46 @@ BUCKETS = [
     ("21+ nights", Q(numNights__gte=22)),
 ]
 
-def user_cache_key(prefix: str, user: User, version: Optional[int] = None) -> str:
+
+import re
+from typing import Optional, Union
+from django.contrib.auth.models import User
+
+def user_cache_key(
+    prefix: str,
+    *,
+    user: Optional[User] = None,
+    hotel_id: Optional[int] = None,
+    version: Optional[int] = None,
+) -> str:
     """
-    Standardize cache key format, with optional versioning.
+    Build a cache key for either user OR hotel (mutually exclusive).
     """
+
     _VALID = re.compile(r"^[A-Za-z0-9_]+$")
     if not _VALID.match(prefix):
         raise ValueError(f"Invalid cache prefix: {prefix!r}")
 
-    base = f"{prefix}_u{user.id}"
+    # ❗ Enforce rule: only one allowed
+    if user and hotel_id:
+        raise ValueError("Provide either user or hotel_id, not both")
+
+    if not user and not hotel_id:
+        raise ValueError("Either user or hotel_id must be provided")
+
+    if user:
+        base = f"{prefix}_u{user.id}"
+    else:
+        base = f"{prefix}_h{hotel_id}"
+
     return f"v{version}:{base}" if version is not None else base
+
+def decide_ttl(filterValue: int) -> int:
+    if not isinstance(filterValue, int):
+        raise TypeError(f"filterValue must be int, got {type(filterValue)}")
+
+    if filterValue == 7:
+        return 14400
+    elif filterValue == 14:
+        return 32400
+    return 43200
