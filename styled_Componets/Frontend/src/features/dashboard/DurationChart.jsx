@@ -5,14 +5,14 @@ const ChartBox = styled.div`
   /* Box */
   background-color: var(--color-grey-0);
   border: 1px solid var(--color-grey-100);
-  border-radius: var(--border-radius-md);
+  border-radius: var(--border-radius--md);
 
 
-  padding: 3.4rem 4.4rem;
+  padding: 10.4rem 10.4rem;
   grid-column: 3 / span 2;
 
   & > *:first-child {
-    margin-bottom: 1.6rem;
+    margin-bottom: 1.8rem;
   }
 
   & .recharts-pie-label-text {

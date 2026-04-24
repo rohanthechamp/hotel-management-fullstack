@@ -11,8 +11,8 @@ import useLogin from "./useLogin";
 function LoginForm() {
   const { register, handleSubmit, formState: { errors }, reset } = useForm({
     defaultValues: {
-      email: "demo@example.com",
-      password: "demo12345",
+      email: "john@gmail.com",
+      password: "admin123",
     },
   });
 

@@ -15,10 +15,10 @@ export const useUpdateBookings = () => {
             queryClient.invalidateQueries({ queryKey: ["bookings"] });
             queryClient.invalidateQueries({ queryKey: ["booking", variables.id] });
             queryClient.invalidateQueries({ queryKey: ["dashboard"] });
-
-            if (window.location.pathname === "/bookings") {
+            // if (window.location.pathname === "/bookings") {
                 navigate("/bookings");
-            }
+            // }
+            // else navigate
 
 
         },

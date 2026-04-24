@@ -1,9 +1,60 @@
 /* eslint-disable no-useless-catch */
+// import { getError } from "../utils/helpers";
+import { getError } from "../utils/helpers";
 import axiosClient, { axiosPrivate } from "./axiosClient";
 
 export const createUser = async (data) => {
     try {
-        const res = await axiosClient.post("users/register/", data);
+        const res = await axiosClient.post("users/auth/register/staff/", data);
+        return res.data;
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+};
+
+
+
+export const sendInvite = async (email) => {
+    try {
+        const res = await axiosPrivate.post('users/auth/invite/send/', {
+            email: email
+        });
+        return res.data;
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }   
+};
+export const getHotelAllInvites = async () => {
+    try {
+        // throw new  Error('')
+        const { data }= await axiosPrivate.get("users/hotel/invites/");
+        // console.log('hotel data invites- '.toUpperCase(),res,res.data);
+        
+        return data;
+    } catch (error) {
+ 
+        console.log(error);
+        throw error;
+    }
+};
+
+
+export const validateInviteCode = async (invite_code) => {
+    try {
+        const res = await axiosClient.get(`users/invite/validate/?code=${invite_code}`);
+        return res.data;
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+};
+
+
+export const createUserAdmin = async (data) => {
+    try {
+        const res = await axiosClient.post("users/auth/register/admin/", data);
         return res.data;
     } catch (error) {
         console.log(error);
@@ -24,7 +75,11 @@ export const logInUser = async (formData) => {
 
 export const getCurrentUser = async () => {
     try {
-        const { data } = await axiosPrivate.get("users/user/me",);
+        setTimeout(function() {
+  console.log("This message appears after 3 seconds.");
+}, 3000);
+
+        const { data } = await axiosPrivate.get("users/user/me");
         console.log(data)
         return data;
     } catch (error) {

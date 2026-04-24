@@ -1,6 +1,6 @@
 import React from "react";
 import styled from "styled-components";
-import SignupForm from "../features/authentication/SignupForm";
+import AdminSignupForm from "../features/authentication/AdminSignupForm";
 
 /* Optional: you can move these CSS variables to your global stylesheet */
 const Page = styled.main`
@@ -127,7 +127,7 @@ function SignUp() {
           <Sub>Create your free account — join and start building.</Sub>
 
           <FormWrap>
-            <SignupForm />
+            <AdminSignupForm />
 
           </FormWrap>
         </Left>

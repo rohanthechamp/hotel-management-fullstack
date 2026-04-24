@@ -5,7 +5,9 @@ export const useCurrentUser = () => {
     const { isLoading, data: UserData, error } = useQuery({
         queryKey: ["currentUserDetails"],
         queryFn: getCurrentUser,
-        staleTime:300
+        staleTime:300,
+        enabled: !!localStorage.getItem("accessToken"),
+
     });
 
 

@@ -35,7 +35,7 @@ export function getTodayKey() {
   return now.toISOString().slice(0, 10) // "2026-01-03"
 }
 export const formDataHandel = (data) => {
-  if (!data) return console.log('No user data provided') ;
+  if (!data) return console.log('No user data provided');
 
 
   const newUserUpdateData = new FormData();
@@ -110,4 +110,25 @@ export const stayDurationColorMap = {
   14: "#E67E22",       // 8–14 nights
   21: "#E74C3C",       // 15–21 nights
   Infinity: "#C0392B" // 21+ nights
+};
+export const getError = (error, Msg) => {
+  const defaultMsg = Msg | "Something went wrong ";
+
+  if (error?.response?.data) {
+    const data = error.response.data;
+
+    if (typeof data === "string") return data;
+
+    if (data?.detail) return data.detail;
+
+    const firstKey = Object.keys(data)[0];
+
+    if (firstKey) {
+      return Array.isArray(data[firstKey])
+        ? data[firstKey][0]
+        : String(data[firstKey]);
+    }
+  }
+
+  return defaultMsg;
 };

@@ -17,12 +17,14 @@ const useRefreshToken = () => {
             refresh: refreshT,
         });
         const newAccessToken = response.data.access;
+        const newRefreshToken = response.data.refresh;
         setAuth((prev) => ({
             ...prev,
+            refreshToken: newRefreshToken,
             accessToken: newAccessToken,
         }));
 
-        
+
         localStorage.setItem("accessToken", newAccessToken);
         console.log(
             "assigned accessToken  to localStorage  after refreshtoken endpoint request for generating access token- ",

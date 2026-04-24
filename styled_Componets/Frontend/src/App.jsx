@@ -20,6 +20,7 @@ import SignUp from "./pages/SignUp";
 import useAxiosPrivate from "./hooks/useAxiosPrivate";
 import ProtectedRoute from "./pages/ProtectedRoute";
 import { DarkModeProvider } from "./context/DarkModeContext";
+import StaffInvite from "./pages/StaffInvite";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -51,6 +52,8 @@ const App = () => {
               <Route path="/" element={<Account />} />
 
               {/* private routes */}
+              <Route path="/staff_invitation/invitation_link/join" element={<StaffInvite />} />
+
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/users" element={<Users />} />
               <Route path="/settings" element={<Settings />} />

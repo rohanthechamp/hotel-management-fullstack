@@ -9,12 +9,13 @@ import { logInUser } from "../../services/apiUser";
 const useLogin = () => {
     const { setAuth } = useAuth();
 
-    const persistAuth = ({ access, refresh, username, email }) => {
+    const persistAuth = ({ access, refresh, username, email, userRole }) => {
         localStorage.setItem("accessToken", access);
         localStorage.setItem("refreshToken", refresh);
         localStorage.setItem("username", username);
         localStorage.setItem("email", email);
-        // document.cookie = "token=" + access;
+        localStorage.setItem("userRole", userRole);
+
 
 
         setAuth({
@@ -23,6 +24,8 @@ const useLogin = () => {
             username,
             email,
             isAuthAuthenticated: true,
+            userRole
+
         });
     };
 

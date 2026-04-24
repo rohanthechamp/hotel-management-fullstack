@@ -9,6 +9,7 @@ const restoreState = () => {
         refreshToken: localStorage.getItem("refreshToken"),
         username: localStorage.getItem("username"),
         email: localStorage.getItem("email"),
+        userRole: localStorage.getItem("userRole"),
     };
 };
 

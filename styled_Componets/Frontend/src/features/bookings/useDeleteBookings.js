@@ -1,4 +1,3 @@
-
 /* eslint-disable no-unused-vars */
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
@@ -8,21 +7,21 @@ export const useDeleteBookings = () => {
     const queryClient = useQueryClient();
 
     const navigate = useNavigate();
-    const { mutate: onDelete, isLoading: isDeleting, error } = useMutation({
+    const {
+        mutate: onDelete,
+        isLoading: isDeleting,
+        error,
+    } = useMutation({
         mutationFn: ({ id }) => deleteBooking(id),
         onSuccess: (_, variables) => {
-            toast.success('Booking Deleted Successfully of  😊😊😊-', variables.id);
+            toast.success("Booking Deleted Successfully of  😊😊😊-", variables.id);
             queryClient.invalidateQueries({ queryKey: ["AllBookings"] });
             queryClient.invalidateQueries({ queryKey: ["booking", variables.id] });
-            navigate('/bookings');
-
+            navigate("/bookings");
         },
 
         onError: (err, variables) => {
-
-
-            toast.error('Booking Deletion Failed 🚨🚨🚨 of -', variables.id, err);
-
+            toast.error("Booking Deletion Failed 🚨🚨🚨 of -", variables.id, err);
         },
     });
 
