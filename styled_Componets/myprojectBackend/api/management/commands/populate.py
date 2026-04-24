@@ -6,7 +6,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.contrib.auth import get_user_model
 from faker import Faker
-from sqlalchemy import false
+# from sqlalchemy import false
 
 from api.models import Cabins, Guests, Bookings, Settings
 from users.models import Hotel
