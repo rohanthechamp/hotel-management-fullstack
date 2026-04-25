@@ -1,3 +1,4 @@
+from ctypes import cast
 from pathlib import Path
 import os
 from datetime import timedelta
@@ -71,8 +72,13 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "myprojectBackend.wsgi.application"
 
-DATABASES = {"default": dj_database_url.parse(os.environ.get("DATABASE_URL"))}
+# Use DATABASE_URL (Railway) if it exists, otherwise fall back to DATABASE_URL1 (Local)
+# The default="" ensures it doesn't crash if neither is found
+database_url = os.environ.get("DATABASE_URL", os.environ.get("DATABASE_URL1", ""))
 
+DATABASES = {
+    'default': dj_database_url.parse(database_url) if database_url else dj_database_url.config(default='sqlite:///db.sqlite3')
+}
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
 ]
