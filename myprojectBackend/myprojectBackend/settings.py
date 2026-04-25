@@ -1,6 +1,7 @@
 from pathlib import Path
 import os
 from datetime import timedelta
+import dj_database_url
 from dotenv import load_dotenv
 from sqlalchemy import false
 
@@ -13,7 +14,7 @@ JWT_SIGNING_KEY = os.getenv("JWT_SIGNING_KEY")
 MY_HOST_EMAIL = os.getenv("EMAIL")
 MY_HOST_PASSWORD = os.getenv("PASSWORD")
 
-DEBUG = True
+DEBUG = False
 
 
 INSTALLED_APPS = [
@@ -37,8 +38,10 @@ INSTALLED_APPS = [
 
 AUTH_USER_MODEL = "users.User"
 
+ALLOWED_HOSTS = ["*"]
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -69,14 +72,9 @@ TEMPLATES = [
 WSGI_APPLICATION = "myprojectBackend.wsgi.application"
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "mydb_project2",
-        "USER": "postgres",
-        "PASSWORD": "Best",
-        "HOST": "localhost",
-        "PORT": "5432",
-    }
+    "default": dj_database_url.config(
+        default="postgresql://postgres:Best@localhost:5432/mydb_project2"
+    )
 }
 
 AUTHENTICATION_BACKENDS = [
@@ -172,7 +170,7 @@ EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = MY_HOST_EMAIL
-EMAIL_HOST_PASSWORD =  MY_HOST_PASSWORD
+EMAIL_HOST_PASSWORD = MY_HOST_PASSWORD
 
 CELERY_BROKER_URL = "amqp://guest:guest@localhost:5672//"
 CELERY_ACCEPT_CONTENT = ["json"]
