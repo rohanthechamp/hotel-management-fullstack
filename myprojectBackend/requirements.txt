@@ -91,3 +91,4 @@ wcwidth==0.2.13
 wheel==0.45.1
 yarg==0.1.10
 gunicorn==25.3.0
+whitenoise
