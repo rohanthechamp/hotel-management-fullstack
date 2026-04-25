@@ -71,11 +71,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "myprojectBackend.wsgi.application"
 
-DATABASES = {
-    "default": dj_database_url.config(
-        default="postgresql://postgres:Best@localhost:5432/mydb_project2"
-    )
-}
+DATABASES = {"default": dj_database_url.parse(os.environ.get("DATABASE_URL"))}
 
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
