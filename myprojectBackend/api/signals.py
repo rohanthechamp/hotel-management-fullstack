@@ -1,7 +1,7 @@
 from django.db.models.signals import post_save, post_delete, post_migrate
 from django.dispatch import receiver
 from django.core.cache import cache
-from flask import request
+
 
 from api.utils.helpers import user_cache_key
 from .models import Bookings, Cabins
