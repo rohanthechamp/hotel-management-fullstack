@@ -3,7 +3,7 @@ from django.db import models
 from datetime import datetime
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
-from sqlalchemy import true
+
 from django.db.models import Index
 from django.db.models.functions import Upper
 from api.validators import validate_secure_image_url

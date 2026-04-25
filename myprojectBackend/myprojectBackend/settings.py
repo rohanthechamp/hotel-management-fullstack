@@ -3,7 +3,7 @@ import os
 from datetime import timedelta
 import dj_database_url
 from dotenv import load_dotenv
-from sqlalchemy import false
+
 
 load_dotenv()
 
