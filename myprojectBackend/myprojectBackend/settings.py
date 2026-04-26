@@ -186,7 +186,7 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
     "ALGORITHM": "HS256",
-    "SIGNING_KEY": JWT_SIGNING_KEY,
+    "SIGNING_KEY": SECRET_KEY,
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
 }
 
