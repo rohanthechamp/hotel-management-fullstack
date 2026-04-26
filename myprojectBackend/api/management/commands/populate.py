@@ -133,7 +133,7 @@ class Command(BaseCommand):
                     discount=Decimal(str(random.uniform(5, 20))).quantize(
                         Decimal("0.01"), rounding=ROUND_HALF_UP
                     ),
-                    observations=fake.sentence(150,false),
+                    observations=fake.sentence(150,False),
                 )
             )
         Cabins.objects.bulk_create(cabin_objs)
