@@ -86,14 +86,17 @@ AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
 ]
 
-# CORS CONFIG (Local Dev)
-CORS_ALLOW_CREDENTIALS = False
+# CORS
+CORS_ALLOW_CREDENTIALS = True
 
-# Not using cookies for auth
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:3000",
     "https://hotel-management-fullstack-ten.vercel.app",
+]
+
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://.*\.vercel\.app$",
 ]
 
 CORS_ALLOW_HEADERS = [
@@ -105,9 +108,13 @@ CORS_ALLOW_HEADERS = [
     "x-requested-with",
 ]
 
-# CSRF Not required for local JWT body auth
-CSRF_TRUSTED_ORIGINS = ["https://hotel-management-fullstack-ten.vercel.app"]
-
+# CSRF
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "https://hotel-management-fullstack-ten.vercel.app",
+    "https://*.vercel.app",
+]
 # Password Validation
 AUTH_PASSWORD_VALIDATORS = [
     {
