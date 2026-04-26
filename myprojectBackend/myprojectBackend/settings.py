@@ -104,7 +104,10 @@ CORS_ALLOW_HEADERS = [
 ]
 
 # CSRF Not required for local JWT body auth
-CSRF_TRUSTED_ORIGINS = []
+CSRF_TRUSTED_ORIGINS = [
+        "https://hotel-management-fullstack-px3f0ty5m-rohanthechamps-projects.vercel.app"
+
+]
 
 # Password Validation
 AUTH_PASSWORD_VALIDATORS = [
