@@ -15,7 +15,7 @@ JWT_SIGNING_KEY = os.getenv("JWT_SIGNING_KEY")
 MY_HOST_EMAIL = os.getenv("EMAIL")
 MY_HOST_PASSWORD = os.getenv("PASSWORD")
 
-DEBUG = False
+DEBUG = True
 
 
 INSTALLED_APPS = [
