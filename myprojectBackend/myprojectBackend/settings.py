@@ -76,14 +76,10 @@ WSGI_APPLICATION = "myprojectBackend.wsgi.application"
 # The default="" ensures it doesn't crash if neither is found
 if os.getenv("DATABASE_URL"):
     # Production (Railway)
-    DATABASES = {
-        "default": dj_database_url.config()
-    }
+    DATABASES = {"default": dj_database_url.config()}
 else:
     # Local
-    DATABASES = {
-        "default": dj_database_url.parse(os.getenv("DATABASE_URL1"))
-    }
+    DATABASES = {"default": dj_database_url.parse(os.getenv("DATABASE_URL1"))}
 
 
 AUTHENTICATION_BACKENDS = [
@@ -97,8 +93,7 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:3000",
-    "https://hotel-management-fullstack-ten.vercel.app"
-    
+    "https://hotel-management-fullstack-ten.vercel.app",
 ]
 
 CORS_ALLOW_HEADERS = [
@@ -111,10 +106,7 @@ CORS_ALLOW_HEADERS = [
 ]
 
 # CSRF Not required for local JWT body auth
-CSRF_TRUSTED_ORIGINS = [
-        "https://hotel-management-fullstack-px3f0ty5m-rohanthechamps-projects.vercel.app"
-
-]
+CSRF_TRUSTED_ORIGINS = ["https://hotel-management-fullstack-ten.vercel.app"]
 
 # Password Validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -177,7 +169,7 @@ if REDIS_URL:
             "LOCATION": REDIS_URL,
             "OPTIONS": {
                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            }
+            },
         }
     }
 else:
