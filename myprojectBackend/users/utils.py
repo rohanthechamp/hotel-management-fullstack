@@ -39,7 +39,7 @@ def send_invite_email(email, invite_link, hotel_name, resend_msg=None):
 
         r = resend.Emails.send(
             {
-                "from": "rohanmalve810@gmail.com",
+                "from": "onboarding@resend.dev",
                 "to": email,
                 "subject": subject,
                 "html": html_content,
