@@ -63,16 +63,16 @@ function StaffRegister() {
             navigate("/login");
 
         } catch (error) {
-              const errorMsg = getError(error,'Registration failed');
+            const errorMsg = getError(error, 'Registration failed');
 
-      toast.error(errorMsg);
-           
+            toast.error(errorMsg);
+
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    console.log('inviteEmail, hotelName, loading, valid ',inviteEmail, hotelName, loading, valid )
+    console.log('inviteEmail, hotelName, loading, valid ', inviteEmail, hotelName, loading, valid)
 
     // 🔥 LOADING STATE
     if (loading) {

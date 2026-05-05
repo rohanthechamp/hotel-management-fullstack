@@ -5,7 +5,6 @@ from datetime import timedelta
 import dj_database_url
 from dotenv import load_dotenv
 
-
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,6 +24,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "debug_toolbar",
     # Local apps
     "api",
     "users",
@@ -36,6 +36,9 @@ INSTALLED_APPS = [
     "django_extensions",
     "django_celery_results",
 ]
+INTERNAL_IPS = [
+    "127.0.0.1",
+]
 
 AUTH_USER_MODEL = "users.User"
 
@@ -44,6 +47,7 @@ MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -128,33 +132,33 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # settings.py
 
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,  # Important: keeps default loggers running
-    "formatters": {
-        "verbose": {
-            "format": "{levelname} {asctime} {module} {message}",
-            "style": "{",
-        },
-    },
-    "handlers": {
-        "console": {
-            "class": "logging.StreamHandler",  # Sends logs to stdout/stderr
-            "formatter": "verbose",
-        },
-    },
-    "root": {
-        "handlers": ["console"],
-        "level": "INFO",  # Captures INFO, WARNING, and ERROR
-    },
-    "loggers": {
-        "django": {
-            "handlers": ["console"],
-            "level": "INFO",
-            "propagate": False,  # Prevents duplicate logs
-        },
-    },
-}
+# LOGGING = {
+#     "version": 1,
+#     "disable_existing_loggers": False,  # Important: keeps default loggers running
+#     "formatters": {
+#         "verbose": {
+#             "format": "{levelname} {asctime} {module} {message}",
+#             "style": "{",
+#         },
+#     },
+#     "handlers": {
+#         "console": {
+#             "class": "logging.StreamHandler",  # Sends logs to stdout/stderr
+#             "formatter": "verbose",
+#         },
+#     },
+#     "root": {
+#         "handlers": ["console"],
+#         "level": "INFO",  # Captures INFO, WARNING, and ERROR
+#     },
+#     "loggers": {
+#         "django": {
+#             "handlers": ["console"],
+#             "level": "INFO",
+#             "propagate": False,  # Prevents duplicate logs
+#         },
+#     },
+# }
 
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
@@ -199,23 +203,37 @@ SIMPLE_JWT = {
 
 
 REDIS_URL = os.getenv("REDIS_URL")
+REDIS_URL_CELERY = os.getenv("REDIS_URL_CELERY")
+# print(REDIS_URL)
 
-if REDIS_URL:
-    CACHES = {
-        "default": {
-            "BACKEND": "django_redis.cache.RedisCache",
-            "LOCATION": REDIS_URL,
-            "OPTIONS": {
-                "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            },
-        }
+# if REDIS_URL:
+#     CACHES = {
+#         "default": {
+#             "BACKEND": "django_redis.cache.RedisCache",
+#             "LOCATION": REDIS_URL,
+#             "OPTIONS": {
+#                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
+#             },
+#         }
+#     }
+# else:
+#     CACHES = {
+#         "default": {
+#             "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+#         }
+#     }
+
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": REDIS_URL,
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+        "KEY_PREFIX": "users",
     }
-else:
-    CACHES = {
-        "default": {
-            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        }
-    }
+}
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
@@ -223,8 +241,13 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = MY_HOST_EMAIL
 EMAIL_HOST_PASSWORD = MY_HOST_PASSWORD
-
+# CELERY_BROKER_URL = "amqp://guest:guest@localhost:5679//"
 CELERY_BROKER_URL = "amqp://guest:guest@localhost:5672//"
+
+# CELERY_BROKER_URL=REDIS_URL_CELERY
+
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 

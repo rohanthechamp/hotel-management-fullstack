@@ -2,18 +2,20 @@ from django.db.models.signals import post_save, post_delete, post_migrate
 from django.dispatch import receiver
 from django.core.cache import cache
 
+# from myprojectBackend.core.utils.caching import user_cache_key
 
-from api.utils.helpers import user_cache_key
-from .models import Bookings, Cabins
+from .models import Bookings, Cabins,Guests
 
 
 CACHE_PATTERN = ["cabinBookedDates_", "dashboard__", "BookingReadView_"]
 
 @receiver(post_save, sender=Bookings)
 @receiver(post_delete, sender=Bookings)
+@receiver(post_save, sender=Guests)
+@receiver(post_delete, sender=Guests)
 def invalidate_Cache(sender, instance, **kwargs):
     print("🚨 SIGNAL TRIGGERED clear_booking_dashboard_caches 🚨")
-    guest_id = instance.guest_id
+    guest_id = instance.id
     current_user = getattr(instance, "user", None)
     if not (current_user and current_user.is_authenticated):
         return
@@ -22,7 +24,7 @@ def invalidate_Cache(sender, instance, **kwargs):
         cache.delete_pattern(f"{pattern}*")
 
     cache.delete("bookings_count")
-    version_key = f"guest_bookings_version:{guest_id}"
+    version_key = f"guest_bookings_version:_u_id{guest_id}_h_id{current_user.id}"
     version = cache.get(version_key, 1)
     cache.set(version_key, version + 1)
 

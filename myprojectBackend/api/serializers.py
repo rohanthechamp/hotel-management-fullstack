@@ -1,14 +1,14 @@
 from rest_framework import serializers
 from api.validators import (
-    validate_image_file,
+  
     validate_national_id,
     validate_positive,
     validate_positive_type,
     validate_secure_image_url,
 )
+from core.validators import validate_image_file
 from .models import Cabins, Guests, Bookings, Settings, Hotel
 from django.db import transaction, DatabaseError
-
 
 # -----------------------
 # Cabin Serializer

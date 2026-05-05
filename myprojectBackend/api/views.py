@@ -1,21 +1,13 @@
-from datetime import timedelta
-import hashlib
-from http import server
-from django.db.models import Sum
-from django.db.models import Q
-from django.db.models.functions import TruncDate
-from django.utils import timezone
 from warnings import filters
 from rest_framework import generics, filters
 from rest_framework.permissions import (
-    IsAdminUser,
     IsAuthenticated,
-    IsAuthenticatedOrReadOnly,
     AllowAny,
 )
 from django.db import transaction
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
+from wtforms import ValidationError
 from api.pagination import CustomPagination
 from api.permission import (
     AllBookingsPermission,
@@ -29,25 +21,32 @@ from api.permission import (
     SingleGuestPermission,
     SingleSettingPermission,
 )
-from api.utils.helpers import BUCKETS, decide_ttl, user_cache_key
+from api.utils.helpers import (
+    MAPPING,
+    decide_ttl,
+)
+from core.utils.caching import get_cached_data, user_cache_key
+from api.selectors import generate_cache_key, get_model_data
+from api.services import (
+    check_cabin_availability,
+    get_daily_revenue_last_x_days,
+    get_eligible_bookings,
+    get_stay_durations,
+    get_today_activities,
+    validate_user,
+)
 from .models import Cabins, Guests, Bookings, Hotel, Settings
 from .serializers import (
     BookingReadSerializer,
     CabinSerializer,
-    GetBookingsLastXDaysSerializer,
-    GuestAllBookingSerializer,
     GuestSerializer,
     BookingWriteSerializer,
     SettingsSerializer,
     MessageSerializer,
-    TodayActivitySerializer,
 )
-from django.core.cache import cache
+
 from rest_framework.views import APIView
-from django.db.models import Sum, Count
-from django.utils import timezone
 from django.core.cache import cache
-from rest_framework.exceptions import ValidationError, PermissionDenied
 
 # ----------------------------------------------------------
 # *📌 CABINS
@@ -60,8 +59,8 @@ class CabinCreateListView(generics.ListCreateAPIView):
     POST /cabins/    -> Create a cabin (admin only)
     """
 
-    permission_classes = [AllCabinPermission]
-    # permission_classes = [AllowAny]
+    # permission_classes = [AllCabinPermission]
+    permission_classes = [AllowAny]
     serializer_class = CabinSerializer
     # filterset_class = CabinsFilter
     filter_backends = [
@@ -78,7 +77,12 @@ class CabinCreateListView(generics.ListCreateAPIView):
         serializer.save(user=self.request.user)
 
     def get_queryset(self):
-        queryset = Cabins.objects.all()
+
+        queryset = (
+            Cabins.objects.filter(hotel_id=self.request.user.hotel.id)
+            .select_related("hotel", "user")
+            .all()
+        )
 
         # * Filtering
         discount = self.request.query_params.get("discount")
@@ -91,16 +95,8 @@ class CabinCreateListView(generics.ListCreateAPIView):
 
         return queryset
 
-    def generate_cache_key(self, request):
-        full_path = request.get_full_path()
-        hashed = hashlib.md5(full_path.encode()).hexdigest()
-
-        version = cache.get("cabins_version", 1)
-
-        return f"cabins:{version}:{hashed}"
-
     def list(self, request, *args, **kwargs):
-        cache_key = self.generate_cache_key(request)
+        cache_key = generate_cache_key(request)
 
         cached_data = cache.get(cache_key)
         if cached_data:
@@ -144,46 +140,50 @@ class SingleCabinRetrieveView(generics.RetrieveUpdateDestroyAPIView):
 # *👤 GUESTS
 # ----------------------------------------------------------
 class GuestBookingsView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, guest_id):
 
-        version_key = f"guest_bookings_version:{guest_id}"
-        version = cache.get(version_key, 1)
+        cache_key = user_cache_key(
+            prefix="guest_bookings_version:",
+            unique_id=guest_id,
+            hotel_id=request.user.hotel.id,
+            version=1,
+        )
+        fields_list = [
+            "id",
+            "guest_id",
+            "startDate",
+            "endDate",
+            "numNights",
+            "totalPrice",
+            "numGuests",
+            "status",
+            "created_at",
+            "cabin__name",
+            "cabin__image",
+        ]
 
-        cache_key = f"guest_bookings:{guest_id}:{version}"
-
-        cached = cache.get(cache_key)
-        if cached:
-            return Response(cached)
-
-        bookings = list(
-            Bookings.objects.filter(guest_id=guest_id)
-            .select_related("cabin")
-            .values(
-                "id",
-                "guest_id",
-                "startDate",
-                "endDate",
-                "numNights",
-                "totalPrice",
-                "numGuests",
-                "status",
-                "created_at",
-                "cabin__name",
-                "cabin__image",
-            )
+        bookings = get_cached_data(
+            cache_key,
+            fetch_func=lambda: get_model_data(
+                hotel_id=request.user.hotel.id,
+                id=guest_id,
+                model=Bookings,
+                fields_list=fields_list,
+                query_optimize="yes_select",
+                select_field=["cabin"],
+            ),
+            timeout=60 * 60,
         )
 
-        cache.set(cache_key, bookings, timeout=60 * 60)
-
-        return Response(bookings)
+        return Response(list(bookings))
 
 
 class GuestsCreateListView(generics.ListCreateAPIView):
 
     permission_classes = [AllowAny]
-    queryset = Guests.objects.all()
+    # queryset = Guests.objects.all().select_related('hotel')
     serializer_class = GuestSerializer
     filter_backends = [
         DjangoFilterBackend,
@@ -194,11 +194,15 @@ class GuestsCreateListView(generics.ListCreateAPIView):
     ordering_fields = ["created_at"]
     ordering = ["id"]
 
+    def get_queryset(self):
+        return Guests.objects.select_related("hotel").all()
+
     def list(self, request, *args, **kwargs):
         email = request.query_params.get("email")
         if email:
             try:
-                guest = Guests.objects.get(email__iexact=email)
+
+                guest = self.get_queryset().objects.get(email__iexact=email).first()
                 serializer = self.get_serializer(guest)
                 return Response(serializer.data)
             except Guests.DoesNotExist:
@@ -215,54 +219,152 @@ class SingleGuestRetrieveView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = GuestSerializer
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# # ----------------------------------------------------------
+# # *📄 BOOKINGS
+# # ----------------------------------------------------------
+# #!❌ WRONG (list doing unnecessary work)
+# # List API (WRONG)
+# class BookingsCreateListView(generics.ListAPIView):
+#     queryset = Bookings.objects.select_related("cabin", "guest")
+#     serializer_class = BookingWriteSerializer
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# #&Before (unnecessary joins in list)
+# # List API BEFORE
+# queryset = Bookings.objects.select_related("cabin", "guest")
+
+# #?After (clean list query)
+# # List API AFTER
+# queryset = Bookings.objects.all()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # ----------------------------------------------------------
-# *📄 BOOKINGS
-# ----------------------------------------------------------
+# # *📄 BOOKINGS
+# # ----------------------------------------------------------
+# #*✅ CORRECT (separate responsibilities)
+# # List API (LIGHTWEIGHT)
+# class BookingsCreateListView(generics.ListAPIView):
+#     queryset = Bookings.objects.all()
+#     serializer_class = BookingWriteSerializer  # returns only IDs
+# # Detail API (RICH DATA)
+# class BookingRetrieveView(generics.RetrieveAPIView):
+#     queryset = Bookings.objects.select_related("cabin", "guest")
+#     serializer_class = BookingReadSerializer  # nested data
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 class BookingsCreateListView(generics.ListCreateAPIView):
-    """
-    GET  /bookings/    -> List all bookings (public)
-    POST /bookings/    -> Create a booking (admin only)
-    #^ all bookings -  get    -   post
-    #*           -  public -   authenticated/staff user
-    """
 
-    permission_classes = [AllBookingsPermission]
-    # permission_classes = [AllowAny]
-
-    queryset = Bookings.objects.prefetch_related("cabin", "guest").all()
-    # filterset_class = BookingFilter
+    permission_classes = [IsAuthenticated]
     serializer_class = BookingWriteSerializer
-    filter_backends = [
-        DjangoFilterBackend,
-        filters.OrderingFilter,
-    ]  # PaidBookings]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     ordering_fields = ["startDate", "totalPrice"]
     ordering = ["id"]
-
     pagination_class = CustomPagination
 
-    # def get_permissions(self):
-    #     """Allow public GET, admin-only POST."""
-    #     return [IsAdminUser()] if self.request.method == "POST" else [IsAuthenticated()]
-
     def get_queryset(self):
-        queryset = self.queryset
+        queryset = Bookings.objects.all()
 
-        # * Filtering
         status = self.request.query_params.get("status")
         if status:
-
             mapping = {
                 "checked-out": "checked-out",
                 "checked-in": "checked-in",
                 "unconfirmed": "unconfirmed",
             }
-
-            value = mapping[status]
-            # print(value)
-            queryset = queryset.filter(status=value)
+            queryset = queryset.filter(status=mapping[status])
 
         return queryset
 
@@ -332,10 +434,7 @@ class SingleBookingRetrieveView(generics.RetrieveUpdateDestroyAPIView):
         incoming_guest_id = self.request.query_params.get("guestId")
         actual_guest_id = instance.guest_id
 
-        if not incoming_guest_id or int(incoming_guest_id) != actual_guest_id:
-
-            raise PermissionDenied("Identity Mismatch: You do not own this resource.")
-
+        validate_user(incoming_guest_id, actual_guest_id)
         return super().perform_destroy(instance)
 
 
@@ -364,18 +463,16 @@ class SettingsCreateListView(generics.ListCreateAPIView):
         return data
 
     def list(self, request, *args, **kwargs):
-        hotel = request.user.hotel
-        cache_key = f"{hotel.id}_hotel_settings"
 
-        cached_data = cache.get(cache_key)
-        if cached_data is not None:
-            return Response(cached_data)
+        cache_key = f"{request.user.hotel.id}_hotel_settings"
 
-        instance = self.get_queryset().first()
-        serializer = self.get_serializer(instance)
+        data = get_cached_data(
+            cache_key,
+            fetch_func=lambda: self.get_serializer(self.get_queryset().first()).data,
+            timeout=60 * 60 * 30,
+        )
 
-        cache.set(cache_key, serializer.data, 60 * 60 * 30)
-        return Response(serializer.data)
+        return Response(data)
 
 
 class SingleSettingsView(generics.RetrieveUpdateDestroyAPIView):
@@ -409,13 +506,15 @@ class SingleSettingsView(generics.RetrieveUpdateDestroyAPIView):
 #     def get(self, request):
 #         return Response({"message": f"Hello {request.user.username}!"})
 #     return JsonResponse({"data": serializer.data})
+
+
 class BookingReadView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
 
         try:
-            booking_id_raw = request.query_params.get("bookingID", 90)
+            booking_id_raw = request.query_params.get("bookingID")
             bookingID = int(booking_id_raw)
         except (ValueError, TypeError):
             return Response({"detail": "Invalid ID format"}, status=400)
@@ -430,7 +529,7 @@ class BookingReadView(APIView):
             return Response({"detail": "Not found"}, status=404)
 
         serializer = BookingReadSerializer(booking_obj)
-        cache.set(cache_key, serializer.data, timeout=300)  # ५ मिनिटे
+        cache.set(cache_key, serializer.data, timeout=300)
 
         return Response(serializer.data)
 
@@ -449,11 +548,13 @@ class BookingMinimalView(APIView):
         except ValueError:
             return Response({"error": "Invalid bookingID"}, status=400)
 
-        data = (
-            Bookings.objects.filter(id=booking_id)
-            .values("observations", "numGuests", "cabin__maxCapacity")
-            .first()
-        )
+        fields_list = ["observations", "numGuests", "cabin__maxCapacity"]
+        data = get_model_data(
+            hotel_id=request.user.hotel.id,
+            id=booking_id,
+            model=Bookings,
+            fields_list=fields_list,
+        ).first()
 
         if not data:
             return Response({"error": "Booking not found"}, status=404)
@@ -475,12 +576,15 @@ class CabinBookedDatesView(APIView):
         cached = cache.get(cache_key)
         if cached:
             return Response(list(cached))
-
-        bookings = Bookings.objects.filter(cabin_id=cabin_id).values(
-            "startDate", "endDate"
+        fields_list = ["startDate", "endDate"]
+        cabin_booked_dates = get_model_data(
+            hotel_id=request.user.hotel.id,
+            id=cabin_id,
+            model=Bookings,
+            fields_list=fields_list,
         )
-        cache.set(cache_key, bookings, 60 * 10)
-        return Response(list(bookings))
+        cache.set(cache_key, cabin_booked_dates, 60 * 10)
+        return Response(list(cabin_booked_dates))
 
 
 # &DashBoard Data
@@ -488,60 +592,24 @@ class CabinBookedDatesView(APIView):
 
 class GetBookingsLastXDaysView(APIView):
     permission_classes = [IsAuthenticated]
-    # permission_classes = [AllowAny]
 
     def get(self, request):
         days = int(request.query_params.get("filterValue", 7))
-        print("days", days)
+        # print("days", days)
         prefix = f"dashboard__LastxDays_{days}"
-        print("Request.user.hotel.id", request.user)
-        cache_key = user_cache_key(prefix, hotel_id=request.user.hotel.id, version=1)
-
-        cached = cache.get(cache_key)
-        if cached:
-            return Response(cached)
-
-        today = timezone.now()
-        cutoff = today - timezone.timedelta(days=days)
-
-        date_q = Q(created_at__gte=cutoff) & Q(created_at__lte=today)  # * base filter
-
-        allBookings = Bookings.objects.filter(date_q)
-
-        summary = allBookings.aggregate(
-            totalBookings=Count("id"),
-            totalSales=Sum("totalPrice"),
+        # print("Request.user.hotel.id", request.user)
+        cache_key = user_cache_key(
+            prefix, unique_id=request.user.id, hotel_id=request.user.hotel.id
         )
-        print("summery", summary)
-
-        checkins = allBookings.filter(status="checked-in").aggregate(
-            totalCheckIns=Count("id")
-        )
-
-        # ?Rooms Occupied ÷ Total Rooms Available) x 100.
-        totalcheckins = checkins["totalCheckIns"]
-        occupancyRate = {"occupancyRate": 0}
-        if totalcheckins != 0:
-            totalCabins = Cabins.objects.count()
-            occuRt = (totalcheckins / totalCabins) * 100
-            occupancyRate["occupancyRate"] = occuRt
-
-        data = {**summary, **checkins, **occupancyRate}
-
-        # handle nulls
-        data["totalBookings"] = int(data.get("totalBookings") or 0)
-        data["totalSales"] = int(data.get("totalSales") or 0)
-        data["totalCheckIns"] = int(data.get("totalCheckIns") or 0)
-
-        serializer = GetBookingsLastXDaysSerializer(data=data)
-        serializer.is_valid(raise_exception=True)
-        response_data = serializer.validated_data
-        # print(data)
 
         ttlValue = decide_ttl(days)
-        cache.set(cache_key, response_data, timeout=ttlValue)
+        data = get_cached_data(
+            cache_key,
+            fetch_func=lambda: get_eligible_bookings(days, request.user.hotel.id),
+            timeout=ttlValue,
+        )
 
-        return Response(response_data)
+        return Response(data)
 
 
 class GetTodayActivitiesView(APIView):
@@ -549,50 +617,17 @@ class GetTodayActivitiesView(APIView):
 
     def get(self, request):
 
-        # today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        # tomorrow_start = today_start + timedelta(days=1)
-        # reqFilter = (
-        #     Q(
-        #         created_at__gte=timezone.now().replace(
-        #             hour=0, minute=0, second=0, microsecond=0
-        #         )
-        #     )
-        #     & Q(created_at__lte=tomorrow_start)
-        #     & Q(status__in=["checked-in", "checked-out", "unconfirmed"])
-        # )
-
-        prefix = "dashboard__todayActivities"
-        cache_key = user_cache_key(prefix, hotel_id=request.user.hotel.id)
-
-        cached = cache.get(cache_key)
-
-        if cached:
-            return Response(cached)
-
-        today = timezone.localdate()
-
-        reqFilter = Q(
-            startDate__lte=today,
-            endDate__gte=today,
-            status__in=["checked-in", "checked-out", "unconfirmed"],
+        cache_key = user_cache_key(
+            "dashboard__todayActivities",
+            unique_id=request.user.id,
+            hotel_id=request.user.hotel.id,
         )
 
-        todayActivities = (
-            Bookings.objects.filter(reqFilter)
-            .select_related("guest")
-            .only(
-                "id",
-                "guest__fullName",
-                "guest__countryFlag",
-                "guest__nationality",
-                "status",
-                "numNights",
-            )
-            .order_by("startDate", "status")[:20]
+        data = get_cached_data(
+            cache_key, lambda: get_today_activities(request.user.hotel.id), 3600
         )
-        serializer = TodayActivitySerializer(todayActivities, many=True)
-        cache.set(cache_key, serializer.data, timeout=3600)
-        return Response(serializer.data)
+
+        return Response(data)
 
 
 class StayDurationView(APIView):
@@ -603,24 +638,15 @@ class StayDurationView(APIView):
 
         prefix = f"dashboard__stats_Duration{days}"
         print("Request.user.hotel.id", request.user.hotel.id)
-        cache_key = user_cache_key(prefix, hotel_id=request.user.hotel.id, version=1)
-        cached = cache.get(cache_key)
-        if cached:
-            return Response(cached)
-        today = timezone.now()
-
-        cutoff = today - timezone.timedelta(days=days)
-        date_q = Q(created_at__gte=cutoff) & Q(created_at__lte=today)  # * base filter
-
-        initialData = Bookings.objects.filter(date_q)
-        data = []
-        for label, condition in BUCKETS:
-            bookingCount = initialData.filter(condition).count()
-            if bookingCount > 0:
-                data.append({"label": label, "count": bookingCount})
-
+        cache_key = user_cache_key(
+            prefix, unique_id=request.user.id, hotel_id=request.user.hotel.id, version=1
+        )
         ttlValue = decide_ttl(days)
-        cache.set(cache_key, data, timeout=ttlValue)
+        data = get_cached_data(
+            cache_key,
+            lambda: get_stay_durations(days, request.user.hotel.id),
+            timeout=ttlValue,
+        )
 
         return Response(data)
 
@@ -631,46 +657,17 @@ class DailyRevenueLastXDaysView(APIView):
     def get(self, request):
         days = days = int(request.query_params.get("filterValue", 7))
 
-        today = timezone.now().date()
-        start_date = today - timedelta(days=days - 1)
         prefix = f"dashboard__dailyRevenueLastXDays_{days}"
-        cache_key = user_cache_key(prefix, hotel_id=request.user.hotel, version=1)
-        cached = cache.get(cache_key)
-        if cached:
-            return Response(cached)
-
-        date_q = Q(created_at__gte=start_date) & Q(created_at__lte=today)
-        revenue_q = date_q & Q(status="checked-out") & Q(isPaid=True)
-
-        qs = Bookings.objects.filter(revenue_q)
-
-        daily = (
-            qs.annotate(day=TruncDate("created_at"))
-            .values("day")
-            .annotate(
-                totalSales=Sum("totalPrice"),
-                extrasSales=Sum("extrasPrice"),
-            )
-            .order_by("day")
+        cache_key = user_cache_key(
+            prefix, unique_id=request.user.id, hotel_id=request.user.hotel
         )
 
-        daily_map = {row["day"]: row for row in daily}
-
-        result = []
-        for i in range(days):
-            day = start_date + timedelta(days=i)
-            row = daily_map.get(day, {})
-
-            result.append(
-                {
-                    "date": day,
-                    "totalSales": row.get("totalSales", 0) or 0,
-                    "extrasSales": row.get("extrasSales", 0) or 0,
-                }
-            )
-
         ttlValue = decide_ttl(days)
-        cache.set(cache_key, result, ttlValue)
+        result = get_cached_data(
+            cache_key,
+            lambda: get_daily_revenue_last_x_days(days, request.user.hotel.id),
+            ttlValue,
+        )
 
         return Response(result)
 
@@ -689,6 +686,3 @@ class HomeView(APIView):
         serializer = MessageSerializer(data)
 
         return Response(serializer.data)
-
-    # def get_queryset(self):
-    #     return super().get_queryset()

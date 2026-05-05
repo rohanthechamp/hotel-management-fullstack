@@ -52,7 +52,7 @@ const App = () => {
               <Route path="/" element={<Account />} />
 
               {/* private routes */}
-              <Route path="/staff_invitation/invitation_link/join" element={<StaffInvite />} />
+
 
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/users" element={<Users />} />
@@ -70,6 +70,7 @@ const App = () => {
             {/* public routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<SignUp />} />
+            <Route path="/staff_invitation/invitation_link/join" element={<StaffInvite />} />
 
             {/* 404 */}
             <Route path="*" element={<PageNotFound />} />

@@ -1,18 +1,18 @@
-from functools import partial
-import uuid
-from xml.etree.ElementTree import iselement
-from django.shortcuts import render
-from requests import get
 from django.core.cache import cache
+from rest_framework.permissions import (
+    IsAdminUser,
+    IsAuthenticated,
+    AllowAny,
+    IsAdminUser,
+)
 
-from api import serializers
+from core.utils.caching import get_cached_data
+from .selectors import get_hotel_code, get_hotel_invites
+from .services import get_auth_token, process_hotel_invite_service
 from users.models import Hotel, HotelInvite
-from users.tasks import send_invite_email_task
 from .serializers import (
     AdminRegisterSerializer,
     CreateHotelSerializer,
-    HotelInviteSerializer,
-    HotelSerializer,
     UpdateCurrentUserSerializer,
     UpdateUserPassword,
     UserLoginSerializer,
@@ -20,7 +20,6 @@ from .serializers import (
     StaffRegisterSerializer,
     ValidateInviteSerializer,
 )
-from django.core.mail import send_mail
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -36,20 +35,11 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.conf import settings
 from rest_framework import status
-
-User = get_user_model()
 from rest_framework.generics import CreateAPIView
-
-
-# Create your views here.from django.core.mail import send_mail
-from django.utils import timezone
-from datetime import timedelta
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
@@ -61,12 +51,10 @@ User = get_user_model()
 
 class CreateHotelView(APIView):
     # Changed to AllowAny so you don't need a Bearer Token while testing
-    permission_classes = [AllowAny]
+    permission_classes = [IsAdminUser]
 
     def post(self, request):
-        # --- ORIGINAL LOGIC (COMMENTED OUT) ---
-        # if request.user.role != "Admin":
-        #     return Response({"error": "Only admins can create hotel"}, status=403)
+
         # ---------------------------------------
 
         serializer = CreateHotelSerializer(data=request.data)
@@ -77,30 +65,29 @@ class CreateHotelView(APIView):
 
         # 2. Manual Logic for API Testing:
         # Get the admin_id from the request body to link the user
-        admin_id = request.data.get("admin_id")
+        # admin_id = request.data.get("admin_id")
 
-        if admin_id:
-            try:
-                # Find the specific user you want to link
-                user_to_link = User.objects.get(id=admin_id)
+        try:
+            # Find the specific user you want to link
+            user_to_link = User.objects.get(id=request.user.id)
 
-                # Link the hotel to this user
-                user_to_link.hotel = hotel
-                user_to_link.save()
-            except User.DoesNotExist:
-                return Response(
-                    {
-                        "message": "Hotel created, but admin_id user not found to link.",
-                        "hotel_id": hotel.id,
-                    },
-                    status=201,
-                )
+            # Link the hotel to this user
+            user_to_link.hotel = hotel
+            user_to_link.save()
+        except User.DoesNotExist:
+            return Response(
+                {
+                    "message": "Hotel created, but admin_id user not found to link.",
+                    "hotel_id": hotel.id,
+                },
+                status=201,
+            )
 
         return Response(
             {
                 "message": "Hotel created and linked successfully",
                 "hotel_id": hotel.id,
-                "linked_user_id": admin_id,
+                "linked_user_id": request.user.hotel,
             },
             status=201,
         )
@@ -110,65 +97,37 @@ class AdminRegisterView(CreateAPIView):
     serializer_class = AdminRegisterSerializer
 
 
-
 class SendInviteEmailView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def post(self, request):
-        if request.user.role != "Admin":
-            return Response(
-                {"error": "Only admin is allowed to send invites"},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
         email = request.data.get("email")
+
         if not email:
             return Response(
                 {"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        is_exits = (
-            HotelInvite.objects.filter(hotel=request.user.hotel, email=email)
-            .order_by("-created_at")
-            .first()
-        )
-
-        invite_code, resend_msg = None
-
-        if is_exits:
-
-            if not is_exits.is_expired and not is_exits.is_used:
-                pass
-            else:
-                is_exits.created_at = timezone.now()
-                is_exits.code = uuid.uuid4()
-                is_exits.expires_at = timezone.now() + timedelta(days=2)
-                is_exits.is_used = False
-
-                is_exits.save()
-
-            invite_code = is_exits.code
-
-        if not is_exits:
-            invite = HotelInvite.objects.create(
-                hotel=request.user.hotel,
-                email=email,
-                expires_at=timezone.now() + timedelta(days=2),
+        # Calling the service
+        try:
+            process_hotel_invite_service(hotel=request.user.hotel, email=email)
+            return Response(
+                {"message": "Invite sent successfully", "email": email},
+                status=status.HTTP_201_CREATED,
             )
-            invite_code = invite.code
-
-        if is_exits:
-            resend_msg = "Again"
-
-        invite_link = f"http://localhost:5173/staff_invitation/invitation_link/join?code={invite_code}"
-        send_invite_email_task.delay(
-            email, invite_link, request.user.hotel.name, resend_msg
-        )
-
-        return Response(
-            {"message": "Invite sent successfully", "email": email},
-            status=status.HTTP_201_CREATED,
-        )   
+        # except Exception as e:
+        #     # Log the error properly in production
+        #     return Response(
+        #         {"error": "Failed to send invite"},
+        #         status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        #     )
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
 class ValidateInviteView(APIView):
@@ -184,7 +143,7 @@ class ValidateInviteView(APIView):
             )
 
         try:
-            invite = HotelInvite.objects.select_related("hotel").get(code=code)
+            invite = get_hotel_code(code)
         except HotelInvite.DoesNotExist:
             return Response({"valid": False}, status=status.HTTP_200_OK)
 
@@ -207,23 +166,20 @@ class HotelInviteListView(APIView):  # Renamed for REST standards
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        hotel_id = request.user.hotel.id
+        # 1. Get the current version number from cache (defaults to 1)
+        version_key = f"hotel_invites_version_{hotel_id}"
+        current_version = cache.get(version_key, 1)
 
-        admin_id = request.user.id
-        # print('admin id',admin_id,request.user)
-        cache_key = f"hotel_invites_{admin_id}"
+        # 2. Use that version to build the DATA key
+        data_cache_key = f"hotel_invites_data_{hotel_id}_v{current_version}"
 
-        # 1. Try to get cached data
-        cached_data = cache.get(cache_key)
-        if cached_data:
-            return Response(cached_data)
-
-        invites = HotelInvite.objects.filter(hotel__admin_id=admin_id)
-
-        serializer = HotelInviteSerializer(invites, many=True)
-        data = serializer.data
-
-        cache.set(cache_key, data, 3600)
-
+        # 3. Use your helper
+        data = get_cached_data(
+            cache_key=data_cache_key,
+            fetch_func=lambda: get_hotel_invites(request.user.id),
+            timeout=3600,
+        )
         return Response(data)
 
 
@@ -278,10 +234,9 @@ class LoginUserView(APIView):
         username = user.name  # or any field you want to return
         userRole = user.role
 
-        # Generating tokens
-        refresh = RefreshToken.for_user(user)
-        access_token = str(refresh.access_token)
-        refresh_token = str(refresh)
+        # get tokens
+
+        access_token, refresh_token = get_auth_token(user)
 
         # Create response
         response = Response(

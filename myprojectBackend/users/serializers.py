@@ -1,11 +1,10 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from PIL import Image
+
+from core.validators import validate_image_file
 from .models import HotelInvite, Profile
 from .models import Hotel
-
-
-# from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 
 User = get_user_model()
@@ -14,29 +13,6 @@ User = get_user_model()
 # -----------------------
 # UserRegister Serializer
 # -----------------------
-def validate_image_file(value):
-    """
-    Production-level image validation for countryFlag field:
-    1. Ensures file is actually an image (not just renamed file).
-    2. Accepts only JPEG and PNG formats.
-    3. Limits file size to 2MB.
-    """
-    # Check size
-    max_size = 2 * 1024 * 1024  # 2 MB
-    if hasattr(value, "size") and value.size > max_size:
-        raise serializers.ValidationError("Image must be smaller than 2MB.")
-
-    # Check content and format
-    try:
-        img = Image.open(value)
-        img.verify()  # verify that it is a valid image
-    except Exception:
-        raise serializers.ValidationError("Uploaded file is not a valid image.")
-
-    if img.format.upper() not in ["JPEG", "PNG"]:
-        raise serializers.ValidationError("Only JPEG and PNG images are allowed.")
-
-    return value
 
 
 class HotelSerializer(serializers.ModelSerializer):
@@ -240,7 +216,7 @@ class CreateHotelSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Hotel
-        fields = ["id","name", "email", "address", "startDate", "admin"]
+        fields = ["id", "name", "email", "address", "startDate", "admin"]
 
     def create(self, validated_data):
         # Extract admin_id and assign it to the admin field
