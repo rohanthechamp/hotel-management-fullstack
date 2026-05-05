@@ -1,8 +1,9 @@
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 import os
+import logging
 import resend
-
+logger = logging.getLogger("django")
 resend.api_key = os.getenv("RESEND_API_KEY")
 
 
@@ -45,7 +46,7 @@ def send_invite_email(email, invite_link, hotel_name, resend_msg=None):
                 "html": html_content,
             }
         )
-        print("✅ Email sent via Resend")
+        logger.info(" ✅  Email sent via Resend")
     except Exception as e:
         print(f"❌ Email failed: {e}")
         raise

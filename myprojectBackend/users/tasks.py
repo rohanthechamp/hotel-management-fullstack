@@ -12,9 +12,10 @@ from users.utils import send_invite_email
 logger = logging.getLogger("django")
 
 @shared_task(
-    autoretry_for=(SMTPConnectError, TimeoutError),
-    default_retry_delay=5,
-    retry_backoff=True,
+    bind=True,
+    autoretry_for=(Exception,),
+    retry_backoff=2,
+    retry_backoff_max=60,
     retry_kwargs={"max_retries": 5},
 )
 def send_invite_email_task(email, invite_link, hotel_name,resend=None):
