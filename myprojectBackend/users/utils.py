@@ -1,8 +1,12 @@
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
+import os
+import resend
+
+resend.api_key = os.getenv("RESEND_API_KEY")
 
 
-def send_invite_email(email, invite_link, hotel_name,resend_msg=None):
+def send_invite_email(email, invite_link, hotel_name, resend_msg=None):
     subject = f"You're invited to join {hotel_name}"
 
     html_content = render_to_string(
@@ -10,24 +14,38 @@ def send_invite_email(email, invite_link, hotel_name,resend_msg=None):
         {
             "invite_link": invite_link,
             "hotel_name": hotel_name,
-            "resend_msg":resend_msg
+            "resend_msg": resend_msg,
         },
     )
 
-    text_content = render_to_string(
-        "users/emails/invite_email.txt",
-        {
-            "invite_link": invite_link,
-            "hotel_name": hotel_name,
-        },
-    )
+    # text_content = render_to_string(
+    #     "users/emails/invite_email.txt",
+    #     {
+    #         "invite_link": invite_link,
+    #         "hotel_name": hotel_name,
+    #     },
+    # )
 
-    msg = EmailMultiAlternatives(
-        subject,
-        text_content,
-        "your_email@gmail.com",
-        [email],
-    )
+    # msg = EmailMultiAlternatives(
+    #     subject,
+    #     text_content,
+    #     "your_email@gmail.com",
+    #     [email],
+    # )
 
-    msg.attach_alternative(html_content, "text/html")
-    msg.send()
+    # msg.attach_alternative(html_content, "text/html")
+    # msg.send()
+    try:
+
+        r = resend.Emails.send(
+            {
+                "from": "rohanmalve810@gmail.com",
+                "to": email,
+                "subject": subject,
+                "html": html_content,
+            }
+        )
+        print("✅ Email sent via Resend")
+    except Exception as e:
+        print(f"❌ Email failed: {e}")
+        raise
