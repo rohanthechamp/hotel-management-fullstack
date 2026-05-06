@@ -237,11 +237,9 @@
 // };
 
 // export default DashboardLayout;
-
 import styled from "styled-components";
-import { CircularProgress } from "@mui/material";
-import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
-import { LayoutDashboard, AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
+import { LayoutDashboard } from "lucide-react";
 
 import useDashboard from "./useDashboard";
 import useDashboardTodayActivities from "../check-in-out/useDashboardTodayActivities";
@@ -254,146 +252,348 @@ import SalesChart from "./SalesChart";
 import DurationChart from "./DurationChart";
 import { getError } from "../../utils/helpers";
 
-// --- THEME-BASED LAYOUT ---
 const DashboardContainer = styled.div`
-  padding: 1.6rem;
-  background-color: #0f1115; /* Deepest layer */
   min-height: 100vh;
+  padding: 1.5rem;
+  background:
+    radial-gradient(circle at top, rgba(88, 28, 135, 0.16), transparent 35%),
+    linear-gradient(180deg, #0b0d12 0%, #0f1115 100%);
 `;
 
-const StyledDashboardLayout = styled.div`
-  display: grid;
-  /* Rule: 4 columns for stats, but charts usually take more space */
-  grid-template-columns: repeat(4, 1fr);
-  grid-template-rows: auto auto auto; 
-  gap: 2.4rem;
-  max-width: 1600px;
+const DashboardShell = styled.div`
+  max-width: 1500px;
   margin: 0 auto;
-
-  /* Media query for smaller screens */
-  @media (max-width: 1200px) {
-    grid-template-columns: 1fr 1fr;
-  }
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 `;
 
 const HeaderSection = styled.div`
-  grid-column: 1 / -1;
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
+  align-items: flex-end;
+  gap: 1rem;
+  padding: 0.25rem 0.25rem 0.5rem;
 `;
 
 const PageTitle = styled.h1`
-  color: white;
-  font-size: 2.4rem;
-  font-weight: 900;
-  letter-spacing: -1px;
+  color: #ffffff;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 0.75rem;
+`;
+
+const Subtitle = styled.p`
+  color: #8d96a8;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+`;
+
+const UpdateText = styled.span`
+  color: #7e8798;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+`;
+
+const Grid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 1rem;
+`;
+
+const CardShell = styled.div`
+  background: rgba(17, 20, 28, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+`;
+
+const MetricRow = styled(CardShell)`
+  grid-column: 1 / -1;
+  padding: 1rem;
+`;
+
+const ActivityCard = styled(CardShell)`
+  grid-column: span 8;
+  padding: 1rem;
+  min-height: 460px;
+`;
+
+const DurationCard = styled(CardShell)`
+  grid-column: span 4;
+  padding: 1rem;
+  min-height: 460px;
+`;
+
+const SalesCard = styled(CardShell)`
+  grid-column: 1 / -1;
+  padding: 1rem;
+  min-height: 420px;
 `;
 
 const LoadingOverlay = styled.div`
-  height: 60vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2rem;
-  color: #ec4899;
+  min-height: 70vh;
+  display: grid;
+  place-items: center;
+  gap: 1rem;
+  color: #8a94a6;
 `;
 
-const ErrorBox = styled.div`
-  grid-column: 1 / -1;
-  background: rgba(225, 29, 72, 0.1);
-  border: 1px solid #e11d48;
+const ErrorBox = styled(CardShell)`
   padding: 2rem;
-  border-radius: 20px;
   color: #fda4af;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
   align-items: center;
+  gap: 1rem;
+  text-align: center;
 `;
 
 const DashboardLayout = () => {
-  // Logic - DO NOT TOUCH
   const { results, isLoading, error } = useDashboard();
   const { results1, isLoading1, error1 } = useDashboardTodayActivities();
   const { staysData, isLoading2, error2 } = useStayDurations();
   const { results3: saleChatData, isLoading: isLoading3, error: error3 } = useSalesData();
 
-  // Loading State
   if (isLoading || isLoading1 || isLoading2 || isLoading3) {
     return (
       <DashboardContainer>
         <LoadingOverlay>
-          <Loader2 size={64} className="animate-spin" />
-          <p className="text-[#8a94a6] font-bold uppercase tracking-widest text-sm">
-            Synchronizing Dashboard Data...
+          <Loader2 size={56} className="animate-spin" />
+          <p className="text-sm font-semibold uppercase tracking-[0.25em]">
+            Synchronizing dashboard data...
           </p>
         </LoadingOverlay>
       </DashboardContainer>
     );
   }
 
-  // Error State
   const errorMsg = getError(error);
   const errorMsg1 = getError(error1);
   const errorMsg2 = getError(error2);
+  const errorMsg3 = getError(error3);
 
   if (error || error1 || error2 || error3) {
     return (
       <DashboardContainer>
-        <ErrorBox>
-          <AlertCircle size={48} />
-          <h3 className="text-xl font-bold">Data Synchronization Failed</h3>
-          <div className="text-center opacity-80 text-sm">
-            <p>{errorMsg}</p>
-            <p>{errorMsg1}</p>
-            <p>{errorMsg2}</p>
-          </div>
-        </ErrorBox>
+        <DashboardShell>
+          <ErrorBox>
+            <AlertCircle size={44} />
+            <h3 className="text-xl font-bold">Data synchronization failed</h3>
+            <div className="text-sm opacity-80 space-y-1">
+              {errorMsg && <p>{errorMsg}</p>}
+              {errorMsg1 && <p>{errorMsg1}</p>}
+              {errorMsg2 && <p>{errorMsg2}</p>}
+              {errorMsg3 && <p>{errorMsg3}</p>}
+            </div>
+          </ErrorBox>
+        </DashboardShell>
       </DashboardContainer>
     );
   }
 
   return (
     <DashboardContainer>
-      <HeaderSection>
-        <PageTitle>
-          <LayoutDashboard size={32} className="text-[#ec4899]" />
-          Hotel Overview
-        </PageTitle>
-        <div className="flex gap-4">
-            {/* You could put your Filter/Date selector here later */}
-            <span className="text-[#606d80] text-xs font-bold uppercase tracking-tighter">
-                Last updated: Just now
-            </span>
-        </div>
-      </HeaderSection>
+      <DashboardShell>
+        <HeaderSection>
+          <div>
+            <PageTitle>
+              <LayoutDashboard size={30} className="text-[#a78bfa]" />
+              Hotel Overview
+            </PageTitle>
+            <Subtitle>Operational visibility for bookings, revenue, and activity</Subtitle>
+          </div>
 
-      <StyledDashboardLayout>
-        {/* Row 1: Metrics (Usually spans 1 column each) */}
-        {/* Passing results to Stats - logic preserved */}
-        <Stats results={results} />
+          <UpdateText>Last updated: just now</UpdateText>
+        </HeaderSection>
 
-        {/* Row 2: Charts & Activities */}
-        {/* TodayActivity usually takes 2 columns for visibility */}
-        <TodayActivity results={results1} />
+        <Grid>
+          <MetricRow>
+            <Stats results={results} />
+          </MetricRow>
 
-        {/* DurationChart (Pie/Donut) */}
-        <DurationChart data={staysData} />
+          <ActivityCard>
+            <TodayActivity results={results1} />
+          </ActivityCard>
 
-        {/* Row 3: Big Sales Chart (Usually spans full width or large area) */}
-        {/* Spanning full width (4 columns) makes sales trends easy to read */}
-        <div style={{ gridColumn: "1 / -1" }}>
-          <SalesChart data={saleChatData} />
-        </div>
-      </StyledDashboardLayout>
+          <DurationCard>
+            <DurationChart data={staysData} />
+          </DurationCard>
+
+          <SalesCard>
+            <SalesChart data={saleChatData} />
+          </SalesCard>
+        </Grid>
+      </DashboardShell>
     </DashboardContainer>
   );
 };
 
 export default DashboardLayout;
+
+// import styled from "styled-components";
+// import { CircularProgress } from "@mui/material";
+// import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+// import { LayoutDashboard, AlertCircle, Loader2 } from "lucide-react";
+
+// import useDashboard from "./useDashboard";
+// import useDashboardTodayActivities from "../check-in-out/useDashboardTodayActivities";
+// import useStayDurations from "./useStayDurations";
+// import useSalesData from "./useSalesData";
+
+// import Stats from "./Stats";
+// import TodayActivity from "../check-in-out/TodayActivity";
+// import SalesChart from "./SalesChart";
+// import DurationChart from "./DurationChart";
+// import { getError } from "../../utils/helpers";
+
+// // --- THEME-BASED LAYOUT ---
+// const DashboardContainer = styled.div`
+//   padding: 1.6rem;
+//   background-color: #0f1115; /* Deepest layer */
+//   min-height: 100vh;
+// `;
+
+// const StyledDashboardLayout = styled.div`
+//   display: grid;
+//   /* Rule: 4 columns for stats, but charts usually take more space */
+//   grid-template-columns: repeat(4, 1fr);
+//   grid-template-rows: auto auto auto; 
+//   gap: 2.4rem;
+//   max-width: 1600px;
+//   margin: 0 auto;
+
+//   /* Media query for smaller screens */
+//   @media (max-width: 1200px) {
+//     grid-template-columns: 1fr 1fr;
+//   }
+// `;
+
+// const HeaderSection = styled.div`
+//   grid-column: 1 / -1;
+//   display: flex;
+//   justify-content: space-between;
+//   align-items: center;
+//   margin-bottom: 1rem;
+// `;
+
+// const PageTitle = styled.h1`
+//   color: white;
+//   font-size: 2.4rem;
+//   font-weight: 900;
+//   letter-spacing: -1px;
+//   display: flex;
+//   align-items: center;
+//   gap: 12px;
+// `;
+
+// const LoadingOverlay = styled.div`
+//   height: 60vh;
+//   display: flex;
+//   flex-direction: column;
+//   align-items: center;
+//   justify-content: center;
+//   gap: 2rem;
+//   color: #ec4899;
+// `;
+
+// const ErrorBox = styled.div`
+//   grid-column: 1 / -1;
+//   background: rgba(225, 29, 72, 0.1);
+//   border: 1px solid #e11d48;
+//   padding: 2rem;
+//   border-radius: 20px;
+//   color: #fda4af;
+//   display: flex;
+//   flex-direction: column;
+//   gap: 1rem;
+//   align-items: center;
+// `;
+
+// const DashboardLayout = () => {
+//   // Logic - DO NOT TOUCH
+//   const { results, isLoading, error } = useDashboard();
+//   const { results1, isLoading1, error1 } = useDashboardTodayActivities();
+//   const { staysData, isLoading2, error2 } = useStayDurations();
+//   const { results3: saleChatData, isLoading: isLoading3, error: error3 } = useSalesData();
+
+//   // Loading State
+//   if (isLoading || isLoading1 || isLoading2 || isLoading3) {
+//     return (
+//       <DashboardContainer>
+//         <LoadingOverlay>
+//           <Loader2 size={64} className="animate-spin" />
+//           <p className="text-[#8a94a6] font-bold uppercase tracking-widest text-sm">
+//             Synchronizing Dashboard Data...
+//           </p>
+//         </LoadingOverlay>
+//       </DashboardContainer>
+//     );
+//   }
+
+//   // Error State
+//   const errorMsg = getError(error);
+//   const errorMsg1 = getError(error1);
+//   const errorMsg2 = getError(error2);
+
+//   if (error || error1 || error2 || error3) {
+//     return (
+//       <DashboardContainer>
+//         <ErrorBox>
+//           <AlertCircle size={48} />
+//           <h3 className="text-xl font-bold">Data Synchronization Failed</h3>
+//           <div className="text-center opacity-80 text-sm">
+//             <p>{errorMsg}</p>
+//             <p>{errorMsg1}</p>
+//             <p>{errorMsg2}</p>
+//           </div>
+//         </ErrorBox>
+//       </DashboardContainer>
+//     );
+//   }
+
+//   return (
+//     <DashboardContainer>
+//       <HeaderSection>
+//         <PageTitle>
+//           <LayoutDashboard size={32} className="text-[#ec4899]" />
+//           Hotel Overview
+//         </PageTitle>
+//         <div className="flex gap-4">
+//             {/* You could put your Filter/Date selector here later */}
+//             <span className="text-[#606d80] text-xs font-bold uppercase tracking-tighter">
+//                 Last updated: Just now
+//             </span>
+//         </div>
+//       </HeaderSection>
+
+//       <StyledDashboardLayout>
+//         {/* Row 1: Metrics (Usually spans 1 column each) */}
+//         {/* Passing results to Stats - logic preserved */}
+//         <Stats results={results} />
+
+//         {/* Row 2: Charts & Activities */}
+//         {/* TodayActivity usually takes 2 columns for visibility */}
+//         <TodayActivity results={results1} />
+
+//         {/* DurationChart (Pie/Donut) */}
+//         <DurationChart data={staysData} />
+
+//         {/* Row 3: Big Sales Chart (Usually spans full width or large area) */}
+//         {/* Spanning full width (4 columns) makes sales trends easy to read */}
+//         <div style={{ gridColumn: "1 / -1" }}>
+//           <SalesChart data={saleChatData} />
+//         </div>
+//       </StyledDashboardLayout>
+//     </DashboardContainer>
+//   );
+// };
+
+// export default DashboardLayout;
