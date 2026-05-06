@@ -5,13 +5,13 @@ export const useSetting = () => {
     const {
         isLoading,
         error,
-        data: settings,
+        data,
     } = useQuery({
         queryKey: ["settings"],
         queryFn: getSettings,
     });
 
-    return { isLoading, error, settings };
+    return { isLoading, error, data };
 };
 
 // export default useSetting

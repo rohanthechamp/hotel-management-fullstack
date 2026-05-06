@@ -2,8 +2,8 @@ import { axiosPrivate } from "./axiosClient";
 
 export async function getSettings() {
   const res = await axiosPrivate.get("api/settings/");
-  console.log(res.data[0])
-  return res?.data[0];
+  console.log('getSettings',res.data)
+  return res?.data;
 }
 /* The code snippet provided is setting up an Axios client in JavaScript for making HTTP requests to
 a Django REST framework (DRF) backend API. The `axios.create()` method is used to create a new

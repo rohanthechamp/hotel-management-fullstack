@@ -1,18 +1,18 @@
 import styled from "styled-components";
-import { PieChart, Pie, Tooltip, Cell, Legend } from "recharts";
+import { PieChart, Pie,ResponsiveContainer, Tooltip, Cell, Legend } from "recharts";
+import Heading from "../../ui/Heading";
 
 const ChartBox = styled.div`
   /* Box */
   background-color: var(--color-grey-0);
   border: 1px solid var(--color-grey-100);
-  border-radius: var(--border-radius--md);
+  border-radius: var(--border-radius-md);
 
-
-  padding: 10.4rem 10.4rem;
+  padding: 2.4rem 3.2rem;
   grid-column: 3 / span 2;
 
   & > *:first-child {
-    margin-bottom: 1.8rem;
+    margin-bottom: 1.6rem;
   }
 
   & .recharts-pie-label-text {
@@ -136,35 +136,46 @@ const DurationChart = ({ data }) => {
     count: item.count,
     color: startDataDark[Math.floor(Math.random() * startDataDark.length)].color,
   }));
-  return (
+ return (
     <ChartBox>
-      <PieChart width={320} height={300}>
-
-        <Pie
-          data={stayDurationsValue}
-          dataKey="count"
-          nameKey="name"
-          outerRadius={110}
-          innerRadius={70}
-          label={({ name, count }) => `${name}: ${count}`}
-        >
-          {stayDurationsValue.map((entry, index) => (
-            <Cell key={index} fill={entry.color} />
-          ))}
-        </Pie>
-        <Tooltip />
-
-        <Legend
-          verticalAlign="bottom"
-          height={80}
-          iconType="circle"
-        />
-
-      </PieChart>
-
+      <Heading as="h2">Stay duration summary</Heading>
+      
+      {/* Used ResponsiveContainer from Component 1 */}
+      <ResponsiveContainer width="100%" height={240}>
+        <PieChart>
+          <Pie
+            data={stayDurationsValue}
+            nameKey="name"
+            dataKey="count"
+            innerRadius={85}   // Matched Component 1
+            outerRadius={110}  // Matched Component 1
+            cx="40%"           // Matched Component 1
+            cy="50%"
+            paddingAngle={3}   // Matched Component 1
+          >
+            {stayDurationsValue.map((entry) => (
+              <Cell 
+                key={entry.name} 
+                fill={entry.color} 
+                stroke={entry.color} 
+              />
+            ))}
+          </Pie>
+          
+          <Tooltip />
+          
+          <Legend
+            verticalAlign="middle"
+            align="right"
+            width="30%"
+            layout="vertical"
+            iconSize={15}
+            iconType="circle"
+          />
+        </PieChart>
+      </ResponsiveContainer>
     </ChartBox>
+  );
+};
 
-  )
-}
-
-export default DurationChart
+export default DurationChart;

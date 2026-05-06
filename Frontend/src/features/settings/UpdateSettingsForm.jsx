@@ -25,8 +25,8 @@
 //   const handleOnSubmit = (e) => {
 //     e.preventDefault();
 //     const formData = new FormData(e.target);
-//     // extra 
-//     const payload = { 
+//     // extra
+//     const payload = {
 //       minBookingLength: Number(formData.get("minBookingLength")),
 //       maxBookingLength: Number(formData.get("maxBookingLength")),
 //       minGuestsPerBooking: Number(formData.get("minGuestsPerBooking")),
@@ -72,7 +72,15 @@
 
 // export default UpdateSettingsForm;
 import styled from "styled-components";
-import { Settings, Moon, Sun, Users, Coffee, Save, XCircle } from "lucide-react";
+import {
+  Settings,
+  Moon,
+  Sun,
+  Users,
+  Coffee,
+  Save,
+  XCircle,
+} from "lucide-react";
 
 import Button from "../../ui/Button";
 import Form from "../../ui/Form";
@@ -116,7 +124,7 @@ const GridFields = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr; /* Rule: Grid layout for better use of space */
   gap: 24px;
-  
+
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
   }
@@ -156,7 +164,7 @@ const ActionFooter = styled.div`
 function UpdateSettingsForm() {
   const {
     isLoading,
-    settings: {
+    data: {
       id,
       minBookingLength,
       maxBookingLength,
@@ -166,21 +174,26 @@ function UpdateSettingsForm() {
   } = useSetting();
 
   const { isUpdating, updateSettingsMutate } = useUpdateSettings();
-
+  if (isLoading) return <Spinner />;
   const handleOnSubmit = (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-    const payload = { 
+    const payload = {
       minBookingLength: Number(formData.get("minBookingLength")),
       maxBookingLength: Number(formData.get("maxBookingLength")),
       minGuestsPerBooking: Number(formData.get("minGuestsPerBooking")),
       breakfastPrice: Number(formData.get("breakfastPrice")),
     };
-    updateSettingsMutate({id, payload});
-  }
+    updateSettingsMutate({ id, payload });
+  };
 
-  if (isLoading) return <Spinner />;
-
+  console.log(
+    id,
+    minBookingLength,
+    maxBookingLength,
+    minGuestsPerBooking,
+    breakfastPrice,
+  );
   return (
     <SettingsWrapper>
       <SettingsHeader>
@@ -196,72 +209,128 @@ function UpdateSettingsForm() {
       <Form onSubmit={handleOnSubmit}>
         <GridFields>
           {/* Minimum Nights */}
-          <FormRow label={<span className="text-[#8a94a6] text-xs font-bold uppercase tracking-wider">Min nights per booking</span>}>
+          <FormRow
+            label={
+              <span className="text-[#8a94a6] text-xs font-bold uppercase tracking-wider">
+                Min nights per booking
+              </span>
+            }
+          >
             <InputBox>
-              <IconContainer><Moon size={18} /></IconContainer>
-              <Input 
-                type="number" 
-                name="minBookingLength" 
-                defaultValue={minBookingLength} 
-                style={{ background: 'transparent', border: 'none', color: 'white', width: '100%' }}
+              <IconContainer>
+                <Moon size={18} />
+              </IconContainer>
+              <Input
+                type="number"
+                name="minBookingLength"
+                defaultValue={minBookingLength}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: "white",
+                  width: "100%",
+                }}
               />
             </InputBox>
           </FormRow>
 
           {/* Maximum Nights */}
-          <FormRow label={<span className="text-[#8a94a6] text-xs font-bold uppercase tracking-wider">Max nights per booking</span>}>
+          <FormRow
+            label={
+              <span className="text-[#8a94a6] text-xs font-bold uppercase tracking-wider">
+                Max nights per booking
+              </span>
+            }
+          >
             <InputBox>
-              <IconContainer><Sun size={18} /></IconContainer>
-              <Input 
-                type="number" 
-                name="maxBookingLength" 
-                defaultValue={maxBookingLength} 
-                style={{ background: 'transparent', border: 'none', color: 'white', width: '100%' }}
+              <IconContainer>
+                <Sun size={18} />
+              </IconContainer>
+              <Input
+                type="number"
+                name="maxBookingLength"
+                defaultValue={maxBookingLength}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: "white",
+                  width: "100%",
+                }}
               />
             </InputBox>
           </FormRow>
 
           {/* Max Guests */}
-          <FormRow label={<span className="text-[#8a94a6] text-xs font-bold uppercase tracking-wider">Max guests per booking</span>}>
+          <FormRow
+            label={
+              <span className="text-[#8a94a6] text-xs font-bold uppercase tracking-wider">
+                Max guests per booking
+              </span>
+            }
+          >
             <InputBox>
-              <IconContainer><Users size={18} /></IconContainer>
+              <IconContainer>
+                <Users size={18} />
+              </IconContainer>
               <Input
                 type="number"
                 name="minGuestsPerBooking"
                 defaultValue={minGuestsPerBooking}
-                style={{ background: 'transparent', border: 'none', color: 'white', width: '100%' }}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: "white",
+                  width: "100%",
+                }}
               />
             </InputBox>
           </FormRow>
 
           {/* Breakfast Price */}
-          <FormRow label={<span className="text-[#8a94a6] text-xs font-bold uppercase tracking-wider">Breakfast price ($)</span>}>
+          <FormRow
+            label={
+              <span className="text-[#8a94a6] text-xs font-bold uppercase tracking-wider">
+                Breakfast price ($)
+              </span>
+            }
+          >
             <InputBox>
-              <IconContainer><Coffee size={18} /></IconContainer>
+              <IconContainer>
+                <Coffee size={18} />
+              </IconContainer>
               <Input
                 type="number"
                 name="breakfastPrice"
                 defaultValue={breakfastPrice}
-                style={{ background: 'transparent', border: 'none', color: 'white', width: '100%' }}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: "white",
+                  width: "100%",
+                }}
               />
             </InputBox>
           </FormRow>
         </GridFields>
 
         <ActionFooter>
-          <Button type="reset" variation="secondary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Button
+            type="reset"
+            variation="secondary"
+            style={{ display: "flex", alignItems: "center", gap: "8px" }}
+          >
             <XCircle size={18} />
             Discard Changes
           </Button>
-          <Button 
-            disabled={isUpdating} 
-            style={{ 
-              background: 'linear-gradient(90deg, #6b21a8 0%, #ec4899 100%)',
-              border: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              boxShadow: '0 10px 20px rgba(107, 33, 168, 0.3)'
+          <Button
+            disabled={isUpdating}
+            style={{
+              background: "linear-gradient(90deg, #6b21a8 0%, #ec4899 100%)",
+              border: "none",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              boxShadow: "0 10px 20px rgba(107, 33, 168, 0.3)",
             }}
           >
             <Save size={18} />

@@ -132,3 +132,10 @@ export const getError = (error, Msg) => {
 
   return defaultMsg;
 };
+
+
+
+export const convertToNumber = (value) => {
+  return Number((value))
+
+}
