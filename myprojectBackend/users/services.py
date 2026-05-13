@@ -2,7 +2,7 @@ import uuid
 from datetime import timedelta
 from django.utils import timezone
 from django.db import transaction
-from rest_framework_simplejwt.tokens import RefreshToken
+
 from .selectors import get_latest_hotel_invite
 from .models import HotelInvite
 from .tasks import send_invite_email_task
@@ -45,10 +45,3 @@ def process_hotel_invite_service(hotel, email: str):
 
 
 
-
-def get_auth_token(user):
-    # Generating tokens
-    refresh = RefreshToken.for_user(user)
-    access_token = str(refresh.access_token)
-    refresh_token = str(refresh)
-    return (access_token,refresh_token)

@@ -48,18 +48,32 @@ class Guests(models.Model):
     created_at = models.DateField(auto_now_add=True)
     fullName = models.TextField(blank=False, null=False)
     email = models.EmailField(blank=False, null=False, db_index=True)
+    password = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+    )
     nationalID = models.BigIntegerField(blank=True, null=True)
     nationality = models.TextField(blank=True, null=True)
     countryFlag = models.URLField(
         max_length=500, null=True, blank=True, validators=[validate_secure_image_url]
     )
     hotel = models.ForeignKey(to=Hotel, on_delete=models.CASCADE, related_name="guests")
+    isOAuthUser = models.BooleanField(default=False, blank=False)
 
     # ^ foreign  relationship with Bookings
     # & established relationship and name is - bookings via 'related' fields
 
     def __str__(self):
         return self.fullName
+
+    @property
+    def is_authenticated(self):
+        return True
+
+    @property
+    def is_anonymous(self):
+        return False
 
     class Meta:
         ordering = ["-created_at"]
@@ -69,12 +83,12 @@ class Guests(models.Model):
                 fields=["email"],
                 name="guest_email_lookup_idx",
                 include=[
-                    "fullName", 
-                    "hotel", 
-                    "nationalID", 
-                    "nationality", 
-                    "countryFlag"
-                ]
+                    "fullName",
+                    "hotel",
+                    "nationalID",
+                    "nationality",
+                    "countryFlag",
+                ],
             ),
         ]
 
@@ -146,11 +160,10 @@ class Bookings(models.Model):
             ("cancel_booking", "Can cancel booking"),
         ]
         indexes = [
-            
             models.Index(
-                fields=['created_at'], 
-                name='booking_date_metrics_idx',
-                include=['totalPrice'] 
+                fields=["created_at"],
+                name="booking_date_metrics_idx",
+                include=["totalPrice"],
             ),
         ]
 

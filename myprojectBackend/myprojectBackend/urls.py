@@ -25,6 +25,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("api.urls")),
     path("users/", include("users.urls")),
+    path("api/guests/", include("guest_portal.urls")),
     path("", api_views.HomeView.as_view(), name="home"),
     path("__debug__/", include("debug_toolbar.urls")),
 ]

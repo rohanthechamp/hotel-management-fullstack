@@ -7,8 +7,9 @@ from rest_framework.permissions import (
 )
 
 from core.utils.caching import get_cached_data
+from core.utils.tokens import get_auth_token
 from .selectors import get_hotel_code, get_hotel_invites
-from .services import get_auth_token, process_hotel_invite_service
+from .services import  process_hotel_invite_service
 from users.models import Hotel, HotelInvite
 from .serializers import (
     AdminRegisterSerializer,

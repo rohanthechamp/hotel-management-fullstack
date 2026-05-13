@@ -85,33 +85,7 @@ class CancelBookingPermission(BasePermission):
         return True
 
 
-# * All Guests View permission
-class AllGuestsPermission(BasePermission):
-    def has_permission(self, request, view):
-        if not request.user.is_authenticated:
-            raise PermissionDenied("Authentication required.")
 
-        if request.method in ["GET", "HEAD", "OPTIONS"]:
-            if not request.user.has_perm("api.view_guests"):
-                raise PermissionDenied("You do not have permission to view guests.")
-
-        if request.method == "POST":
-            if not request.user.has_perm("api.create_guests"):
-                raise PermissionDenied("You do not have permission to create guests.")
-
-        return True
-
-
-# * single Guest View permission
-
-
-class SingleGuestPermission(HotelObjectPermissionMixin, BasePermission):
-    def has_permission(self, request, view):
-
-        if not request.user.has_perm("api.change_guests"):
-            raise PermissionDenied("You do not have permission to modify guests.")
-
-        return True
 
 
 # * All Settings View permission

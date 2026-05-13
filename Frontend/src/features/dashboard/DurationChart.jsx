@@ -20,48 +20,6 @@ const ChartBox = styled.div`
   }
 `;
 
-const startDataLight = [
-  {
-    duration: "1 night",
-    value: 0,
-    color: "#ef4444",
-  },
-  {
-    duration: "2 nights",
-    value: 0,
-    color: "#f97316",
-  },
-  {
-    duration: "3 nights",
-    value: 0,
-    color: "#eab308",
-  },
-  {
-    duration: "4-5 nights",
-    value: 0,
-    color: "#84cc16",
-  },
-  {
-    duration: "6-7 nights",
-    value: 0,
-    color: "#22c55e",
-  },
-  {
-    duration: "8-14 nights",
-    value: 0,
-    color: "#14b8a6",
-  },
-  {
-    duration: "15-21 nights",
-    value: 0,
-    color: "#3b82f6",
-  },
-  {
-    duration: "21+ nights",
-    value: 0,
-    color: "#a855f7",
-  },
-];
 
 const startDataDark = [
   {
@@ -106,16 +64,6 @@ const startDataDark = [
   },
 ];
 
-const stayDurationColorByLabel = {
-  "1 night": "#2ECC71",
-  "2 nights": "#27AE60",
-  "3 nights": "#1ABC9C",
-  "4–5 nights": "#F1C40F",
-  "6–7 nights": "#F39C12",
-  "8–14 nights": "#E67E22",
-  "15–21 nights": "#E74C3C",
-  "21+ nights": "#C0392B",
-};
 
 const DurationChart = ({ data }) => {
   /**

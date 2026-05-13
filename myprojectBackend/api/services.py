@@ -1,7 +1,9 @@
 from csv import Error
 from rest_framework.exceptions import PermissionDenied
 from datetime import timedelta
-from api.selectors import get_model_data
+
+from core.utils.selectors import get_model_data
+
 from api.serializers import (
     GetBookingsLastXDaysSerializer,
     TodayActivitySerializer,

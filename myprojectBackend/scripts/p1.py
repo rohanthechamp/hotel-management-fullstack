@@ -6,7 +6,10 @@ from django.db.models import Sum, Count
 from django.utils import timezone
 from django.db.models import Q, F
 from django.db.models.functions import TruncDate
-
+import time
+from django.db import connection, reset_queries
+from api.models import Cabins
+from myprojectBackend.users.models import Hotel
 # from time import timezone
 from django.utils import timezone
 from warnings import filters
@@ -18,6 +21,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from api.filters import PaidBookings, RecentPaidBookings
 from api.pagination import CustomPagination
 from api.models import Cabins, Guests, Bookings, Settings
+from users.models import  Hotel
 
 from django.core.cache import cache
 from rest_framework.views import APIView
@@ -146,9 +150,7 @@ from api.utils.helpers import BUCKETS
     # )
     # print(Bookings.objects.all().count())
 
-import time
-from django.db import connection, reset_queries
-from api.models import Cabins
+
 
 def run():
     # Clear previous query logs
@@ -181,26 +183,30 @@ def run():
     #     # This returns the execution plan as a string
     # plan = queryset.explain(analyze=True)
     # print(plan)
-    today = timezone.localdate()
-    reqFilter = Q(
-            startDate__lte=today,
-            endDate__gte=today,
-            status__in=["checked-in", "checked-out", "unconfirmed"],
-        )
+    # today = timezone.localdate()
+    # reqFilter = Q(
+    #         startDate__lte=today,
+    #         endDate__gte=today,
+    #         status__in=["checked-in", "checked-out", "unconfirmed"],
+    #     )
 
-    todayActivities = (
-            Bookings.objects.filter(reqFilter)
-            .select_related("guest")
-            .only(
-                "id",
-                "guest__fullName",
-                "guest__countryFlag",
-                "guest__nationality",
-                "status",
-                "numNights",
-            )
-            .order_by("startDate", "status")[:20]
-        )
+    # todayActivities = (
+    #         Bookings.objects.filter(reqFilter)
+    #         .select_related("guest")
+    #         .only(
+    #             "id",
+    #             "guest__fullName",
+    #             "guest__countryFlag",
+    #             "guest__nationality",
+    #             "status",
+    #             "numNights",
+    #         )
+    #         .order_by("startDate", "status")[:20]
+    #     )
     
-    plan = todayActivities.explain(analyze=True)
-    print(plan)
+    # plan = todayActivities.explain(analyze=True)
+    # print(plan)
+    allHotels=Hotel.objects.all()
+    if isinstance(list,allHotels):
+        print('yes')
+    print(list(allHotels))

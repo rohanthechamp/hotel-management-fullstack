@@ -1,4 +1,3 @@
-from ctypes import cast
 from pathlib import Path
 import os
 from datetime import timedelta
@@ -28,6 +27,7 @@ INSTALLED_APPS = [
     # Local apps
     "api",
     "users",
+    "guest_portal",
     # Third-party
     "rest_framework",
     "corsheaders",
@@ -96,12 +96,12 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:3000",
-    "https://hotel-management-fullstack-ten.vercel.app",
+    # "https://hotel-management-fullstack-ten.vercel.app",
 ]
 
-CORS_ALLOWED_ORIGIN_REGEXES = [
-    r"^https://.*\.vercel\.app$",
-]
+# CORS_ALLOWED_ORIGIN_REGEXES = [
+#     r"^https://.*\.vercel\.app$",
+# ]
 
 CORS_ALLOW_HEADERS = [
     "authorization",

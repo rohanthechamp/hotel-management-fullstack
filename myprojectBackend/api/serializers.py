@@ -1,6 +1,7 @@
+import email
+
 from rest_framework import serializers
 from api.validators import (
-  
     validate_national_id,
     validate_positive,
     validate_positive_type,
@@ -105,6 +106,17 @@ class GuestSerializer(serializers.ModelSerializer):
         validators=[validate_national_id], required=False, allow_null=True
     )
     nationality = serializers.CharField(required=False, max_length=60, allow_blank=True)
+    password = serializers.CharField(
+        required=False,
+        write_only=True,
+        allow_blank=True,
+    )
+
+    isOAuthUser = serializers.BooleanField(
+        required=False,
+        default=False,
+        write_only=True,
+    )
 
     class Meta:
         model = Guests
@@ -139,7 +151,7 @@ class GuestSerializer(serializers.ModelSerializer):
         # Ensure every guest is linked to the admin's hotel automatically
         if "hotel" not in validated_data:
             hotel = Hotel.objects.first()
-            print("GETTED HOTEl", hotel)
+            print("get HOTEl", hotel)
             if not hotel:
                 raise serializers.ValidationError("No Hotel found in system.")
             validated_data["hotel"] = hotel
@@ -175,6 +187,8 @@ class GuestAllBookingSerializer(serializers.ModelSerializer):
             "name": obj.cabin.name,
             "image": obj.cabin.image,
         }
+
+
 class BookingReadSerializer(serializers.ModelSerializer):
     guest = GuestSerializer(read_only=True)
     cabin = CabinSerializer(read_only=True)
@@ -182,6 +196,8 @@ class BookingReadSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bookings
         fields = "__all__"
+
+
 # class BookingReadSerializer(serializers.ModelSerializer):
 
 #     cabin = CabinSerializer(read_only=True)
@@ -314,7 +330,7 @@ class SettingsSerializer(serializers.ModelSerializer):
     Settings serializer: light validation ensuring min/max logic is coherent.
     """
 
-    minBookingLength  = serializers.IntegerField(validators=[validate_positive])
+    minBookingLength = serializers.IntegerField(validators=[validate_positive])
     maxBookingLength = serializers.IntegerField(validators=[validate_positive])
     minGuestsPerBooking = serializers.IntegerField(validators=[validate_positive])
     breakfastPrice = serializers.DecimalField(max_digits=20, decimal_places=2)
@@ -371,3 +387,18 @@ class DailyRevenueSerializer(serializers.Serializer):
     date = serializers.DateField()
     totalSales = serializers.DecimalField(max_digits=12, decimal_places=2)
     extrasSales = serializers.DecimalField(max_digits=12, decimal_places=2)
+
+
+class GoogleLoginSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+
+    def validate_email(self, value):
+        """Custom validation to check if guest exists."""
+        if not Guests.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Email not found in our guest list.")
+        return value
+
+
+class TokenResponseSerializer(serializers.Serializer):
+    access = serializers.CharField()
+    refresh = serializers.CharField()

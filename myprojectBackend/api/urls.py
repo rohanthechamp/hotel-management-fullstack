@@ -2,8 +2,10 @@ from django.urls import path
 from .views import (
     BookingMinimalView,
     CabinCreateListView,
+    GoogleOAuthJWTView,
     GuestBookingsView,
     HomeView,
+    RefreshAccessTokenView,
     SingleCabinRetrieveView,
     GuestsCreateListView,
     SingleGuestRetrieveView,
@@ -31,11 +33,13 @@ urlpatterns = [
     path("settings/", SettingsCreateListView.as_view()),
     path("settings/<int:pk>/", SingleSettingsView.as_view()),
     path("bookings/<int:id>/minimal/", BookingMinimalView.as_view()),
-    
-    path("guests/<int:guest_id>/bookings/", GuestBookingsView.as_view(), name="guest-bookings"),
+    path(
+        "guests/<int:guest_id>/bookings/",
+        GuestBookingsView.as_view(),
+        name="guest-bookings",
+    ),
     # custom views
     path("", HomeView.as_view(), name="home"),
-    
     # dashboard data
     path("dashboard/bookings/", GetBookingsLastXDaysView.as_view()),
     path("dashboard/activities/today-summary/", GetTodayActivitiesView.as_view()),
@@ -45,5 +49,10 @@ urlpatterns = [
         "cabins/<int:cabin_id>/booked-dates/",
         CabinBookedDatesView.as_view(),
         name="cabin-booked-dates",
+    ),
+    path("auth/google/", GoogleOAuthJWTView.as_view(), name="google-jwt"),
+    path(
+        "auth/refresh/",
+        RefreshAccessTokenView.as_view(),
     ),
 ]

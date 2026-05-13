@@ -1,6 +1,5 @@
 /* eslint-disable no-useless-catch */
-// import { getError } from "../utils/helpers";
-import { getError } from "../utils/helpers";
+
 import axiosClient, { axiosPrivate } from "./axiosClient";
 
 export const createUser = async (data) => {
