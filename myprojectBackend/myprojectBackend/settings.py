@@ -96,7 +96,8 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:3000",
-    # "https://hotel-management-fullstack-ten.vercel.app",
+    "http://localhost:3001",
+    "https://hotel-management-fullstack-ten.vercel.app",
 ]
 
 # CORS_ALLOWED_ORIGIN_REGEXES = [
@@ -116,6 +117,8 @@ CORS_ALLOW_HEADERS = [
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:3000",
+    "http://localhost:3001",
+    
     "https://hotel-management-fullstack-ten.vercel.app",
     "https://*.vercel.app",
 ]

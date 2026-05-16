@@ -1,3 +1,5 @@
+from typing import Tuple
+
 from rest_framework_simplejwt.tokens import RefreshToken
 import jwt
 from datetime import (
@@ -6,12 +8,8 @@ from datetime import (
     timezone,
 )
 from django.conf import settings
-
 ACCESS_TOKEN_MINUTES = 15
-
 REFRESH_TOKEN_DAYS = 7
-
-
 def generate_access_token(guest):
 
     payload = {
@@ -27,6 +25,7 @@ def generate_access_token(guest):
         settings.SECRET_KEY,
         algorithm="HS256",
     )
+
 
 
 def generate_refresh_token(guest):
@@ -46,16 +45,14 @@ def generate_refresh_token(guest):
     )
 
 
-def getTokens(guest) -> dict[str, str]:
+def getTokens(guest) -> tuple[str, str]:
 
     # Using variables as keys with None or empty string values
-    tokens = {"accessT": "", "refreshT": ""}
 
     accesstoken = generate_access_token(guest)
     refreshtoken = generate_refresh_token(guest)
-    tokens["accessT"] = accesstoken
-    tokens["refreshT"] = refreshtoken
-    return tokens
+
+    return (accesstoken, refreshtoken)
 
 
 def verify_token(token):
@@ -84,4 +81,5 @@ def get_auth_token(user):
     refresh = RefreshToken.for_user(user)
     access_token = str(refresh.access_token)
     refresh_token = str(refresh)
+    
     return (access_token, refresh_token)

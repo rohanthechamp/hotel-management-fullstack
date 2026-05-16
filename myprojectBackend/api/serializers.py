@@ -147,15 +147,15 @@ class GuestSerializer(serializers.ModelSerializer):
 
     # # --- Logic for Auto-linking Hotel ---
 
-    def create(self, validated_data):
-        # Ensure every guest is linked to the admin's hotel automatically
-        if "hotel" not in validated_data:
-            hotel = Hotel.objects.first()
-            print("get HOTEl", hotel)
-            if not hotel:
-                raise serializers.ValidationError("No Hotel found in system.")
-            validated_data["hotel"] = hotel
-        return super().create(validated_data)
+    # def create(self, validated_data):
+    #     # Ensure every guest is linked to the admin's hotel automatically
+    #     if "hotel" not in validated_data:
+    #         hotel = Hotel.objects.first()
+    #         print("get HOTEl", hotel)
+    #         if not hotel:
+    #             raise serializers.ValidationError("No Hotel found in system.")
+    #         validated_data["hotel"] = hotel
+    #     return super().create(validated_data)
 
 
 # -----------------------
@@ -387,18 +387,3 @@ class DailyRevenueSerializer(serializers.Serializer):
     date = serializers.DateField()
     totalSales = serializers.DecimalField(max_digits=12, decimal_places=2)
     extrasSales = serializers.DecimalField(max_digits=12, decimal_places=2)
-
-
-class GoogleLoginSerializer(serializers.Serializer):
-    email = serializers.EmailField(required=True)
-
-    def validate_email(self, value):
-        """Custom validation to check if guest exists."""
-        if not Guests.objects.filter(email=value).exists():
-            raise serializers.ValidationError("Email not found in our guest list.")
-        return value
-
-
-class TokenResponseSerializer(serializers.Serializer):
-    access = serializers.CharField()
-    refresh = serializers.CharField()

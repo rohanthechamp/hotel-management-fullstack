@@ -1,28 +1,23 @@
-from email.policy import strict
 from warnings import filters
 from rest_framework import generics, filters
 from rest_framework.permissions import (
     IsAuthenticated,
-    AllowAny,
 )
-from rest_framework import status
-from django.db import transaction
+
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
-from sqlalchemy import null
-from wtforms import ValidationError
+
 
 from api.pagination import CustomPagination
 from api.permission import (
     AllBookingsPermission,
     AllCabinPermission,
-    AllGuestsPermission,
     AllSettingsPermission,
+
     SingleCabinPermission,
     CheckINBookingPermission,
     CheckOUTBookingPermission,
     CancelBookingPermission,
-    SingleGuestPermission,
     SingleSettingPermission,
 )
 from api.utils.helpers import (
@@ -31,39 +26,27 @@ from api.utils.helpers import (
 )
 from core.utils.caching import get_cached_data, user_cache_key
 from api.selectors import generate_cache_key
-from core.utils.selectors import get_model_data 
 
 from api.services import (
-    check_cabin_availability,
     get_daily_revenue_last_x_days,
     get_eligible_bookings,
     get_stay_durations,
     get_today_activities,
     validate_user,
 )
-from core.utils.tokens import (
-    generate_access_token,
-    generate_refresh_token,
-    get_auth_token,
-    getTokens,
-    verify_token,
-)
-from myprojectBackend.guest_portal.authentication import GuestJWTAuthentication
-from .models import Cabins, Guests, Bookings, Hotel, Settings
+
+
+from .models import Cabins, Bookings, Settings
 from .serializers import (
     BookingReadSerializer,
     CabinSerializer,
-    GuestSerializer,
     BookingWriteSerializer,
     SettingsSerializer,
     MessageSerializer,
-    TokenResponseSerializer,
 )
 
 from rest_framework.views import APIView
 from django.core.cache import cache
-
-from api import serializers
 
 # ----------------------------------------------------------
 # *📌 CABINS
@@ -153,199 +136,28 @@ class SingleCabinRetrieveView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CabinSerializer
 
 
-# ----------------------------------------------------------
-# *👤 GUESTS
-# ----------------------------------------------------------
-class GuestBookingsView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, guest_id):
-
-        cache_key = user_cache_key(
-            prefix="guest_bookings_version:",
-            unique_id=guest_id,
-            hotel_id=request.user.hotel.id,
-            version=1,
-        )
-        fields_list = [
-            "id",
-            "guest_id",
-            "startDate",
-            "endDate",
-            "numNights",
-            "totalPrice",
-            "numGuests",
-            "status",
-            "created_at",
-            "cabin__name",
-            "cabin__image",
-        ]
-
-        bookings = get_cached_data(
-            cache_key,
-            fetch_func=lambda: get_model_data(
-                hotel_id=request.user.hotel.id,
-                id=guest_id,
-                model=Bookings,
-                fields_list=fields_list,
-                query_optimize="yes_select",
-                select_field=["cabin"],
-            ),
-            timeout=60 * 60,
-        )
-
-        return Response(list(bookings))
-
-
-class GuestsCreateListView(generics.ListCreateAPIView):
-
-    permission_classes = [AllowAny]
-    # queryset = Guests.objects.all().select_related('hotel')
-    serializer_class = GuestSerializer
-    filter_backends = [
-        DjangoFilterBackend,
-        filters.SearchFilter,
-        filters.OrderingFilter,
-    ]
-    search_fields = ["=fullName", "nationality"]
-    ordering_fields = ["created_at"]
-    ordering = ["id"]
-
-    def get_queryset(self):
-        return Guests.objects.select_related("hotel").all()
-
-    def list(self, request, *args, **kwargs):
-        email = request.query_params.get("email")
-        if email:
-            try:
-
-                guest = self.get_queryset().filter(email__iexact=email).first()
-                if guest is None:
-                    return Response({"detail": "Not found."}, status=404)
-
-                # print('GUESTTTT',guest)
-                serializer = self.get_serializer(guest)
-                return Response(serializer.data)
-            except Guests.DoesNotExist:
-                return Response({"detail": "Not found."}, status=404)
-        return super().list(request, *args, **kwargs)
-
-    # def perform_create(self, serializer):
-
-    #     isAuthLogin = self.request.data["isAuth2"]
-    #     if isAuthLogin:
-    #         serializer.save()
-
-
-class GoogleOAuthJWTView(APIView):
-
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        serializer = GoogleOAuthJWTView(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        email = serializer.validated_data["email"]
-        currentGuest = Guests.objects.get(email=email)
-
-        tokens = getTokens(guest=currentGuest)  #  manual token logic
-        response_serializer = TokenResponseSerializer(data=tokens)
-        response_serializer.is_valid(raise_exception=True)
-
-        return Response({"data": response_serializer.data}, status=200)
-
-
-class RefreshAccessTokenView(APIView):
-
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-
-        refresh_token = request.data.get("refresh")
-
-        if not refresh_token:
-
-            return Response({"detail": "Refresh token required"}, status=400)
-
-        payload = verify_token(refresh_token)
-
-        if payload is None:
-
-            return Response({"detail": "Invalid refresh token"}, status=401)
-
-        if payload["type"] != "refresh":
-
-            return Response({"detail": "Invalid token type"}, status=401)
-
-        guest = Guests.objects.filter(id=payload["guest_id"]).first()
-
-        if guest is None:
-
-            return Response({"detail": "Guest not found"}, status=404)
-
-        tokens = getTokens(guest=guest)  #  manual token logic
-        response_serializer = TokenResponseSerializer(data=tokens)
-        response_serializer.is_valid(raise_exception=True)
-
-        return Response({"data": response_serializer.data}, status=200)
-
-
-
-
-    # # ----------------------------------------------------------
-    # # *📄 BOOKINGS
-    # # ----------------------------------------------------------
-    # #!❌ WRONG (list doing unnecessary work)
-    # # List API (WRONG)
-    # class BookingsCreateListView(generics.ListAPIView):
-    #     queryset = Bookings.objects.select_related("cabin", "guest")
-    #     serializer_class = BookingWriteSerializer
-
-    # #&Before (unnecessary joins in list)
-    # # List API BEFORE
-    # queryset = Bookings.objects.select_related("cabin", "guest")
-
-    # #?After (clean list query)
-    # # List API AFTER
-    # queryset = Bookings.objects.all()
-
-    # ----------------------------------------------------------
-    # # *📄 BOOKINGS
-    # # ----------------------------------------------------------
-    # #*✅ CORRECT (separate responsibilities)
-    # # List API (LIGHTWEIGHT)
-    # class BookingsCreateListView(generics.ListAPIView):
-    #     queryset = Bookings.objects.all()
-    #     serializer_class = BookingWriteSerializer  # returns only IDs
-    # # Detail API (RICH DATA)
-    # class BookingRetrieveView(generics.RetrieveAPIView):
-    #     queryset = Bookings.objects.select_related("cabin", "guest")
-    #     serializer_class = BookingReadSerializer  # nested data
-
 class BookingsCreateListView(generics.ListAPIView):
 
-        permission_classes = [IsAuthenticated]
-        serializer_class = BookingWriteSerializer
-        filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
-        ordering_fields = ["startDate", "totalPrice"]
-        ordering = ["id"]
-        pagination_class = CustomPagination
+    permission_classes = [IsAuthenticated]
+    serializer_class = BookingWriteSerializer
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    ordering_fields = ["startDate", "totalPrice"]
+    ordering = ["id"]
+    pagination_class = CustomPagination
 
-        def get_queryset(self):
-            queryset = Bookings.objects.filter(
-                hotel=self.request.user.hotel
-            )
+    def get_queryset(self):
+        queryset = Bookings.objects.filter(hotel=self.request.user.hotel)
 
-            status = self.request.query_params.get("status")
-            if status:
-                mapping = {
-                    "checked-out": "checked-out",
-                    "checked-in": "checked-in",
-                    "unconfirmed": "unconfirmed",
-                }
-                queryset = queryset.filter(status=mapping[status])
+        status = self.request.query_params.get("status")
+        if status:
+            mapping = {
+                "checked-out": "checked-out",
+                "checked-in": "checked-in",
+                "unconfirmed": "unconfirmed",
+            }
+            queryset = queryset.filter(status=mapping[status])
 
-            return queryset
+        return queryset
 
 
 class SingleBookingRetrieveView(generics.RetrieveUpdateDestroyAPIView):
@@ -363,20 +175,13 @@ class SingleBookingRetrieveView(generics.RetrieveUpdateDestroyAPIView):
         AllBookingsPermission,
         CheckINBookingPermission,
         CheckOUTBookingPermission,
-        CancelBookingPermission,
+        CancelBookingPermission
     ]
 
-    # permission_classes = [AllowAny]
+    
 
     queryset = Bookings.objects.select_related("cabin", "guest").all()
     serializer_class = BookingReadSerializer
-
-    def perform_destroy(self, instance):
-        incoming_guest_id = self.request.query_params.get("guestId")
-        actual_guest_id = instance.guest_id
-
-        validate_user(incoming_guest_id, actual_guest_id)
-        return super().perform_destroy(instance)
 
 
 # ----------------------------------------------------------
@@ -434,21 +239,6 @@ class SingleSettingsView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = SettingsSerializer
 
 
-# # * function based views
-# def homeView(request):
-#     BookingsCount = cache.get_or_set(
-#         "bookings_count", lambda: Bookings.objects.count(), timeout=300
-#     )
-
-#     data = {"message": f"{BookingsCount} products in DB"}
-#     serializer = MessageSerializer(data)
-
-
-#     def get(self, request):
-#         return Response({"message": f"Hello {request.user.username}!"})
-#     return JsonResponse({"data": serializer.data})
-
-
 class BookingReadView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -473,61 +263,6 @@ class BookingReadView(APIView):
         cache.set(cache_key, serializer.data, timeout=300)
 
         return Response(serializer.data)
-
-
-class BookingMinimalView(APIView):
-
-    permission_classes = [AllowAny]
-
-    def get(self, request, id):
-        booking_id = id
-
-        if not booking_id:
-            return Response({"error": "bookingID is required"}, status=400)
-
-        try:
-            booking_id = int(booking_id)
-        except ValueError:
-            return Response({"error": "Invalid bookingID"}, status=400)
-
-        fields_list = ["observations", "numGuests", "cabin__maxCapacity"]
-        data = get_model_data(
-            hotel_id=request.user.hotel.id,
-            id=booking_id,
-            model=Bookings,
-            fields_list=fields_list,
-        ).first()
-
-        if not data:
-            return Response({"error": "Booking not found"}, status=404)
-
-        return Response(data)
-
-
-class CabinBookedDatesView(APIView):
-    """
-    GET /cabins/<cabin_id>/booked-dates/
-    Returns all booked date ranges for a specific cabin
-    """
-
-    authentication_classes = [GuestJWTAuthentication]
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, cabin_id):
-
-        cache_key = f"cabinBookedDates_{cabin_id}"  # prefix invalidate
-        cached = cache.get(cache_key)
-        if cached:
-            return Response(list(cached))
-        fields_list = ["startDate", "endDate"]
-        cabin_booked_dates = get_model_data(
-            hotel_id=request.user.hotel.id,
-            id=cabin_id,
-            model=Bookings,
-            fields_list=fields_list,
-        )
-        cache.set(cache_key, cabin_booked_dates, 60 * 10)
-        return Response(list(cabin_booked_dates))
 
 
 # &DashBoard Data

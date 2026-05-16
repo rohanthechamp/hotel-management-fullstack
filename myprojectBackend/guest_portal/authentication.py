@@ -1,7 +1,7 @@
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 from core.utils.tokens import verify_token
-from myprojectBackend.api.models import Guests
+from api.models import Guests
 
 
 class GuestJWTAuthentication(BaseAuthentication):
@@ -9,6 +9,7 @@ class GuestJWTAuthentication(BaseAuthentication):
     def authenticate(self, request):
 
         auth_header = request.headers.get("Authorization")
+        print("GuestJWTAuthentication", auth_header)
 
         if not auth_header:
 
@@ -27,6 +28,7 @@ class GuestJWTAuthentication(BaseAuthentication):
             raise AuthenticationFailed("Invalid authorization header")
 
         payload = verify_token(token)
+        
 
         if payload is None:
 

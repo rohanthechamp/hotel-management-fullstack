@@ -11,6 +11,8 @@ class HotelObjectPermissionMixin:
         return True
 
 
+
+
 # * All Cabin View permission
 class AllCabinPermission(BasePermission):
     def has_permission(self, request, view):
@@ -83,9 +85,6 @@ class CancelBookingPermission(BasePermission):
             raise PermissionDenied("You do not have permission to cancel bookings.")
 
         return True
-
-
-
 
 
 # * All Settings View permission

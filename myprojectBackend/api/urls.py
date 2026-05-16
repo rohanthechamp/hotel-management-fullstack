@@ -1,14 +1,8 @@
 from django.urls import path
 from .views import (
-    BookingMinimalView,
     CabinCreateListView,
-    GoogleOAuthJWTView,
-    GuestBookingsView,
     HomeView,
-    RefreshAccessTokenView,
     SingleCabinRetrieveView,
-    GuestsCreateListView,
-    SingleGuestRetrieveView,
     BookingsCreateListView,
     SingleBookingRetrieveView,
     SettingsCreateListView,
@@ -19,25 +13,16 @@ from .views import (
     StayDurationView,
     BookingReadView,
     DailyRevenueLastXDaysView,
-    CabinBookedDatesView,
 )
 
 urlpatterns = [
     path("cabins/", CabinCreateListView.as_view()),
     path("cabins/<int:pk>/", SingleCabinRetrieveView.as_view()),
-    path("guests/", GuestsCreateListView.as_view()),
-    path("guests/<int:pk>/", SingleGuestRetrieveView.as_view()),
     path("bookings/", BookingsCreateListView.as_view()),
     path("bookings/<int:pk>/", SingleBookingRetrieveView.as_view()),
     path("bookings/read/", BookingReadView.as_view()),
     path("settings/", SettingsCreateListView.as_view()),
     path("settings/<int:pk>/", SingleSettingsView.as_view()),
-    path("bookings/<int:id>/minimal/", BookingMinimalView.as_view()),
-    path(
-        "guests/<int:guest_id>/bookings/",
-        GuestBookingsView.as_view(),
-        name="guest-bookings",
-    ),
     # custom views
     path("", HomeView.as_view(), name="home"),
     # dashboard data
@@ -45,14 +30,4 @@ urlpatterns = [
     path("dashboard/activities/today-summary/", GetTodayActivitiesView.as_view()),
     path("dashboard/activities/stay-durations/", StayDurationView.as_view()),
     path("dashboard/revenue/daily/", DailyRevenueLastXDaysView.as_view()),
-    path(
-        "cabins/<int:cabin_id>/booked-dates/",
-        CabinBookedDatesView.as_view(),
-        name="cabin-booked-dates",
-    ),
-    path("auth/google/", GoogleOAuthJWTView.as_view(), name="google-jwt"),
-    path(
-        "auth/refresh/",
-        RefreshAccessTokenView.as_view(),
-    ),
 ]

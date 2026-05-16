@@ -4,15 +4,14 @@ from django.core.cache import cache
 
 # from myprojectBackend.core.utils.caching import user_cache_key
 
-from .models import Bookings, Cabins,Guests
+from .models import Bookings, Cabins
 
 
 CACHE_PATTERN = ["cabinBookedDates_", "dashboard__", "BookingReadView_"]
 
 @receiver(post_save, sender=Bookings)
 @receiver(post_delete, sender=Bookings)
-@receiver(post_save, sender=Guests)
-@receiver(post_delete, sender=Guests)
+
 def invalidate_Cache(sender, instance, **kwargs):
     print("🚨 SIGNAL TRIGGERED clear_booking_dashboard_caches 🚨")
     guest_id = instance.id
@@ -24,9 +23,7 @@ def invalidate_Cache(sender, instance, **kwargs):
         cache.delete_pattern(f"{pattern}*")
 
     cache.delete("bookings_count")
-    version_key = f"guest_bookings_version:_u_id{guest_id}_h_id{current_user.id}"
-    version = cache.get(version_key, 1)
-    cache.set(version_key, version + 1)
+    
 
 
 @receiver(post_save, sender=Cabins)

@@ -54,6 +54,7 @@ def get_cached_data(cache_key, fetch_func, timeout=600):
     data = cache.get(cache_key)
 
     if data is not None:
+        print("⚡ CACHE HIT Guest Bookings")
         return data
 
     # Cache miss: Execute the database function

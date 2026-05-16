@@ -1,6 +1,9 @@
+import logging
+
 from django.shortcuts import render
 from django.db import transaction
 from rest_framework.views import APIView
+from rest_framework import generics, status
 
 # Create your views here.
 from django.core.cache import cache
@@ -35,14 +38,19 @@ from guest_portal.authentication import GuestJWTAuthentication
 from api.pagination import CustomPagination
 from core.utils.caching import get_cached_data, user_cache_key
 from core.utils.selectors import get_model_data
-from guest_portal.permission import (
-    AllGuestsPermission,
-    SingleGuestPermission,
+from guest_portal.permission import IsBookingOwner
+from core.utils.tokens import getTokens, verify_token
+from guest_portal.serializers import (
+    GoogleLoginSerializer,
+    TokenResponseSerializer,
 )
+from guest_portal.selectors import get_bookings_for_guest
 
 # -----------------------------------
 # HELPERS
 # -----------------------------------
+
+logger = logging.getLogger(__name__)
 
 
 def get_current_hotel():
@@ -72,6 +80,7 @@ class CustomerBookingCreateView(generics.CreateAPIView):
     def perform_create(self, serializer):
 
         with transaction.atomic():
+            # print("booking DATA", self.request.data)
 
             cabin_id = self.request.data["cabin"]
 
@@ -102,10 +111,8 @@ class CustomerCabinListView(generics.ListAPIView):
     """
     PUBLIC CABIN LIST
     """
-   
-    permission_classes = [AllowAny]
 
-   
+    permission_classes = [AllowAny]
 
     serializer_class = CabinSerializer
 
@@ -134,14 +141,11 @@ class CustomerCabinListView(generics.ListAPIView):
     def get_queryset(self):
 
         hotel = get_current_hotel()
+        # print("user hotel :", hotel)
 
-        queryset = (
-            Cabins.objects.filter(hotel=hotel)
-            .select_related(
-                "hotel",
-                "user",
-            )
-            .all()
+        queryset = Cabins.objects.filter(hotel=hotel).select_related(
+            "hotel",
+            "user",
         )
 
         discount = self.request.query_params.get("discount")
@@ -199,6 +203,36 @@ class CustomerCabinListView(generics.ListAPIView):
         return Response(serializer.data)
 
 
+class CabinBookedDatesView(APIView):
+    """
+    GET /cabins/<cabin_id>/booked-dates/
+    Returns all booked date ranges for a specific cabin
+    """
+
+    permission_classes = [AllowAny]
+
+    def get(self, request, cabin_id):
+
+        cache_key = f"cabin_booked_dates_{cabin_id}"
+
+        cached = cache.get(cache_key)
+        if cached:
+            print("⚡% CACHE HIT CabinBookedDatesView")
+            return Response(cached)
+
+        bookings = Bookings.objects.filter(
+            cabin_id=cabin_id,
+            status__in=["checked-in", "unconfirmed"],
+        ).values("startDate", "endDate")
+
+        data = list(bookings)
+
+        cache.set(cache_key, data, 60 * 10)
+        print("⚡ NO CACHE HIT CabinBookedDatesView")
+
+        return Response(data)
+
+
 # -----------------------------------
 # SINGLE CABIN
 # -----------------------------------
@@ -207,16 +241,20 @@ class CustomerCabinListView(generics.ListAPIView):
 class CustomerSingleCabinView(generics.RetrieveAPIView):
     """
     PUBLIC SINGLE CABIN
-    """    
-
+    """
 
     permission_classes = [AllowAny]
-
-
     serializer_class = CabinSerializer
 
+    # Define the base queryset lookup attribute
+    lookup_field = "pk"
+
     def get_queryset(self):
-        return Cabins.objects.filter(hotel=self.request.user.hotel)
+        # 1. Execute the function to get the actual hotel instance/ID
+        current_hotel = get_current_hotel()
+
+        # 2. Return the filtered queryset for the retrieve mixin to search within
+        return Cabins.objects.filter(hotel=current_hotel)
 
 
 # -----------------------------------
@@ -227,12 +265,9 @@ class CustomerSingleCabinView(generics.RetrieveAPIView):
 class CustomerSettingsView(generics.ListAPIView):
     """
     PUBLIC HOTEL SETTINGS
-    """ 
-    authentication_classes = [GuestJWTAuthentication]
+    """
 
-    permission_classes = [IsAuthenticated]
-
-
+    permission_classes = [AllowAny]
 
     serializer_class = SettingsSerializer
 
@@ -260,6 +295,49 @@ class CustomerSettingsView(generics.ListAPIView):
 # -----------------------------------
 # GUEST BOOKINGS
 # -----------------------------------
+
+
+class GuestsCreateListView(generics.ListCreateAPIView):
+    """
+    PUBLIC GUEST LIST, FILTER & CREATION
+    """
+
+    permission_classes = [AllowAny]
+    serializer_class = GuestSerializer
+
+    def get_queryset(self):
+        """
+        Define the base queryset scoped to the current hotel.
+        """
+        current_hotel = get_current_hotel()
+        return Guests.objects.filter(hotel=current_hotel)
+
+    def perform_create(self, serializer):
+        """
+        Inject the current hotel automatically during creation.
+        """
+        serializer.save(hotel=get_current_hotel())
+
+    def list(self, request, *args, **kwargs):
+        """
+        Override list to return a single object if 'email' query param is provided,
+        otherwise fall back to regular listing behavior.
+        """
+        email = request.query_params.get("email")
+
+        if email:
+            # Query within the hotel-scoped base queryset
+            guest = self.get_queryset().filter(email__iexact=email).first()
+
+            if not guest:
+                return Response(
+                    {"detail": "Guest not found."}, status=status.HTTP_404_NOT_FOUND
+                )
+
+            serializer = self.get_serializer(guest)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return super().list(request, *args, **kwargs)
 
 
 class CustomerBookingListView(generics.ListAPIView):
@@ -290,14 +368,15 @@ class CustomerBookingListView(generics.ListAPIView):
 # -----------------------------------
 
 
-class CustomerSingleBookingView(generics.RetrieveDestroyAPIView):
+class CustomerSingleBookingView(generics.RetrieveUpdateDestroyAPIView):
+
     """
     GUEST SINGLE BOOKING
     """
 
     authentication_classes = [GuestJWTAuthentication]
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsBookingOwner]
 
     serializer_class = BookingReadSerializer
 
@@ -306,71 +385,146 @@ class CustomerSingleBookingView(generics.RetrieveDestroyAPIView):
         "guest",
     )
 
-    def get_object(self):
-
-        booking = super().get_object()
-
-        if booking.guest_id != self.request.user.id:
-
-            raise ValidationError("Not your booking.")
-
-        return booking
-
-    def perform_destroy(self, instance):
-
-        if instance.guest_id != self.request.user.id:
-
-            raise ValidationError("Cannot cancel another guest booking.")
-
-        return super().perform_destroy(instance)
-
 
 # -------------------------------------
+
+
 class GuestBookingsView(APIView):
     authentication_classes = [GuestJWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request, guest_id):
 
-        cache_key = user_cache_key(
-            prefix="guest_bookings_version:",
-            unique_id=guest_id,
-            hotel_id=request.user.hotel.id,
-            version=1,
-        )
-        fields_list = [
-            "id",
-            "guest_id",
-            "startDate",
-            "endDate",
-            "numNights",
-            "totalPrice",
-            "numGuests",
-            "status",
-            "created_at",
-            "cabin__name",
-            "cabin__image",
-        ]
+        hotel_id = request.user.hotel.id
 
+        # Unique cache key
+        cache_key = user_cache_key(
+            prefix="guest_bookings_version_",
+            unique_id=guest_id,
+            hotel_id=hotel_id,
+            # version=2,  # bump version to avoid old broken cache
+        )
+
+        # Get serialized cached data
         bookings = get_cached_data(
-            cache_key,
-            fetch_func=lambda: get_model_data(
-                hotel_id=request.user.hotel.id,
-                id=guest_id,
-                model=Bookings,
-                fields_list=fields_list,
-                query_optimize="yes_select",
-                select_field=["cabin"],
+            cache_key=cache_key,
+            fetch_func=lambda: get_bookings_for_guest(
+                hotel_id=hotel_id,
+                guest_id=guest_id,
             ),
             timeout=60 * 60,
         )
+        
+        ("bookings", bookings)
+        # Debugging
+        # print(type(bookings))
 
-        return Response(list(bookings))
+        # if bookings:
+        #     print(type(bookings[0]))
+        #     print("bookings", bookings)
+
+        # Return JSON-safe serialized data
+        return Response(bookings)
+
+
+class BookingMinimalView(APIView):
+    authentication_classes = [GuestJWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, id):
+        booking_id = id
+
+        if not booking_id:
+            return Response({"error": "bookingID is required"}, status=400)
+
+        try:
+            booking_id = int(booking_id)
+        except ValueError:
+            return Response({"error": "Invalid bookingID"}, status=400)
+
+        fields_list = ["observations", "numGuests", "cabin__maxCapacity"]
+        data = get_model_data(
+            hotel_id=request.user.hotel.id,
+            id=booking_id,
+            model=Bookings, 
+            fields_list=fields_list,
+        ).first()
+
+        if not data:
+            return Response({"error": "Booking not found"}, status=404)
+
+        return Response(data)
 
 
 class SingleGuestRetrieveView(generics.RetrieveUpdateDestroyAPIView):
 
-    permission_classes = [AllGuestsPermission, SingleGuestPermission]
+    authentication_classes = [GuestJWTAuthentication]
+    permission_classes = [IsAuthenticated]
 
     queryset = Guests.objects.all()
     serializer_class = GuestSerializer
+
+
+class GoogleOAuthJWTView(APIView):
+
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        # print("request.data", request.data)
+        serializer = GoogleLoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data["email"]
+        currentGuest = Guests.objects.get(email=email)
+        # print("currentGuest", currentGuest)
+
+        accesstoken, refreshtoken = getTokens(
+            guest=currentGuest
+        )  #  manual to    ken logic
+        token_data = {"accesstoken": accesstoken, "refreshtoken": refreshtoken}
+        # print("tokens", token_data)
+
+        # Returned the token dictionary inside the response data
+        return Response({"data": token_data}, status=status.HTTP_200_OK)
+
+
+class RefreshAccessTokenView(APIView):
+
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+
+        refreshtoken = request.data.get("refreshtoken")
+        logger.info(
+            f"refresh token from the request {request} and refreshtoken is {refreshtoken} "
+        )
+
+        if not refreshtoken:
+
+            return Response({"detail": "Refresh token required"}, status=400)
+
+        payload = verify_token(refreshtoken)
+
+        if payload is None:
+
+            return Response({"detail": "Invalid refresh token"}, status=401)
+
+        if payload["type"] != "refresh":
+
+            return Response({"detail": "Invalid token type"}, status=401)
+
+        guest = Guests.objects.filter(id=payload["guest_id"]).first()
+        logger.info(f"guest {guest}")
+
+        if guest is None:
+
+            return Response({"detail": "Guest not found"}, status=404)
+
+        # tokens = getTokens(guest=guest)  #  manual token logic
+        # response_serializer = TokenResponseSerializer(data=tokens)
+        # response_serializer.is_valid(raise_exception=True)
+
+        accesstoken, refreshtoken = getTokens(guest=guest)
+        token_data = {"accesstoken": accesstoken, "refreshtoken": refreshtoken}
+
+        return Response({"data": token_data}, status=status.HTTP_200_OK)

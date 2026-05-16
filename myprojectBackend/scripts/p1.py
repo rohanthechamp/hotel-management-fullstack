@@ -9,7 +9,7 @@ from django.db.models.functions import TruncDate
 import time
 from django.db import connection, reset_queries
 from api.models import Cabins
-from myprojectBackend.users.models import Hotel
+from users.models import Hotel
 # from time import timezone
 from django.utils import timezone
 from warnings import filters
@@ -30,7 +30,7 @@ from django.utils import timezone
 from api.utils.helpers import BUCKETS
 
 
-# def run():
+def run():
 
     # cutoff_date = timezone.now().date() - timezone.timedelta(days=90)
     # LastXDaysBooking= (
@@ -150,17 +150,15 @@ from api.utils.helpers import BUCKETS
     # )
     # print(Bookings.objects.all().count())
 
-
-
-def run():
+    # def run():
     # Clear previous query logs
     # reset_queries()
-    
+
     # # Method 1: .all().count()
     # start_time = time.time()
     # count1 = Cabins.objects.all().count()
     # end_time = time.time()
-    
+
     # print(f"--- Method 1 (.all().count()) --- Cabins.objects.all().count() ")
     # print(f"Result: {count1}")
     # print(f"Time: {end_time - start_time:.4f} seconds")
@@ -179,7 +177,7 @@ def run():
     # print(f"Time: {end_time - start_time:.4f} seconds")
     # print(f"SQL: {connection.queries[-1]['sql']}\n")
     # queryset = Bookings.objects.filter(status='confirmed').annotate(total=Sum('price'))
-        
+
     #     # This returns the execution plan as a string
     # plan = queryset.explain(analyze=True)
     # print(plan)
@@ -203,10 +201,32 @@ def run():
     #         )
     #         .order_by("startDate", "status")[:20]
     #     )
-    
+
     # plan = todayActivities.explain(analyze=True)
     # print(plan)
-    allHotels=Hotel.objects.all()
-    if isinstance(list,allHotels):
-        print('yes')
-    print(list(allHotels))
+    # allHotels=Hotel.objects.all()
+    # if isinstance(list,allHotels):
+    #     print('yes')
+    # print(list(allHotels))
+    guestBookings = (
+        Bookings.objects.filter(hotel__id=1, guest__id=604)
+        .select_related("cabin")
+        .values(
+            "id",
+            "guest_id",
+            "startDate",
+            "endDate",
+            "numNights",
+            "totalPrice",
+            "numGuests",
+            "status",
+            "created_at",
+            "cabin__name",
+            "cabin__image",
+        )
+    )
+    # print(Guests.objects.filter(email="theftamen@gmail.com").values('id'))
+
+    # guest_bookings = Bookings.objects.filter(guest_id=604)
+
+    print("empty:-", list(guestBookings))
