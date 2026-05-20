@@ -2,6 +2,7 @@ import logging
 
 from django.shortcuts import render
 from django.db import transaction
+from pandas import read_sql_query
 from rest_framework.views import APIView
 from rest_framework import generics, status
 
@@ -37,11 +38,13 @@ from guest_portal.authentication import GuestJWTAuthentication
 
 from api.pagination import CustomPagination
 from core.utils.caching import get_cached_data, user_cache_key
-from core.utils.selectors import get_model_data
+from core.utils.selectors import authenticate_guest, get_model_data
 from guest_portal.permission import IsBookingOwner
 from core.utils.tokens import getTokens, verify_token
 from guest_portal.serializers import (
     GoogleLoginSerializer,
+    GuestLoginSerializer,
+    GuestRegisterSerializer,
     TokenResponseSerializer,
 )
 from guest_portal.selectors import get_bookings_for_guest
@@ -58,7 +61,13 @@ def get_current_hotel():
     SINGLE HOTEL PROJECT
     """
 
-    return Hotel.objects.first()
+    cached_hotel_object = cache.get("hotel_key")
+    if cached_hotel_object:
+        return  cached_hotel_object
+    hotel_object = Hotel.objects.first()
+    cache.set("hotel_key", hotel_object)
+
+    return hotel_object
 
 
 # -----------------------------------
@@ -369,7 +378,6 @@ class CustomerBookingListView(generics.ListAPIView):
 
 
 class CustomerSingleBookingView(generics.RetrieveUpdateDestroyAPIView):
-
     """
     GUEST SINGLE BOOKING
     """
@@ -414,7 +422,7 @@ class GuestBookingsView(APIView):
             ),
             timeout=60 * 60,
         )
-        
+
         ("bookings", bookings)
         # Debugging
         # print(type(bookings))
@@ -446,7 +454,7 @@ class BookingMinimalView(APIView):
         data = get_model_data(
             hotel_id=request.user.hotel.id,
             id=booking_id,
-            model=Bookings, 
+            model=Bookings,
             fields_list=fields_list,
         ).first()
 
@@ -465,27 +473,84 @@ class SingleGuestRetrieveView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = GuestSerializer
 
 
-class GoogleOAuthJWTView(APIView):
-
+class GuestLoginView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        # print("request.data", request.data)
+        """
+        Handles traditional email and password authentication.
+        """
+        # Validate incoming credentials using the traditional login serializer
+        serializer = GuestLoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data.get("email")
+        password = serializer.validated_data.get("password")
+        print(email, password)
+
+        # Authenticate against your custom database table
+        guest = authenticate_guest(email=email, password=password)
+
+        if guest is None:
+            return Response(
+                {"error": "Invalid email or password."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        # Generate JWT session tokens manually
+        accesstoken, refreshtoken = getTokens(guest=guest)
+
+        return Response(
+            {
+                "message": "Login successful!",
+                "guest": {
+                    "id": guest.id,
+                    "fullName": guest.fullName,
+                    "email": guest.email,
+                },
+                "tokens": {
+                    "accesstoken": accesstoken,
+                    "refreshtoken": refreshtoken,
+                },
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+# ==========================================
+# 2. Google OAuth Token Exchange View
+# ==========================================
+class GoogleOAuthJWTView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        """
+        Exchanges a verified Google account email for application JWT tokens.
+        """
+        # Validate the incoming Google identity payload
         serializer = GoogleLoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         email = serializer.validated_data["email"]
-        currentGuest = Guests.objects.get(email=email)
-        # print("currentGuest", currentGuest)
 
-        accesstoken, refreshtoken = getTokens(
-            guest=currentGuest
-        )  #  manual to    ken logic
+        try:
+            # Confirm that the Google user profile already exists locally
+            currentGuest = Guests.objects.get(email=email)
+        except Guests.DoesNotExist:
+            # 404 signals the frontend to redirect the user to a registration page
+            return Response(
+                {"error": "Account not found. Please register first."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Generate app tokens directly for verified Google identity
+        accesstoken, refreshtoken = getTokens(guest=currentGuest)
         token_data = {"accesstoken": accesstoken, "refreshtoken": refreshtoken}
-        # print("tokens", token_data)
 
-        # Returned the token dictionary inside the response data
-        return Response({"data": token_data}, status=status.HTTP_200_OK)
+        return Response(
+            {"message": "Google auth successful!", "data": token_data},
+            status=status.HTTP_200_OK,
+        )
 
 
 class RefreshAccessTokenView(APIView):
@@ -528,3 +593,18 @@ class RefreshAccessTokenView(APIView):
         token_data = {"accesstoken": accesstoken, "refreshtoken": refreshtoken}
 
         return Response({"data": token_data}, status=status.HTTP_200_OK)
+
+
+class GuestRegisterView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+
+        serializer = GuestRegisterSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response(
+                {"message": "Guest created successfully"},
+                status=status.HTTP_201_CREATED,
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

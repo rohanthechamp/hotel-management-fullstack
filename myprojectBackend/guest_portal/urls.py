@@ -10,6 +10,8 @@ from .views import (
     CustomerSettingsView,
     GoogleOAuthJWTView,
     GuestBookingsView,
+    GuestLoginView,
+    GuestRegisterView,
     GuestsCreateListView,
     RefreshAccessTokenView,
     SingleGuestRetrieveView,
@@ -33,12 +35,14 @@ urlpatterns = [
     # GUEST (CREATE + LOOKUP)
     # -----------------------------
     path("guests/", GuestsCreateListView.as_view()),
+    path("guests/register/", GuestRegisterView.as_view()),
     # -----------------------------
     # AUTH (GOOGLE → JWT)
     # -----------------------------
     path("auth/google/", GoogleOAuthJWTView.as_view()),
+    path("auth/login/", GuestLoginView.as_view()),
     # -----------------------------
-    # TOKEN REFRESH 
+    # TOKEN REFRESH
     # -----------------------------
     path("auth/refresh/", RefreshAccessTokenView.as_view()),
     # -------------------------

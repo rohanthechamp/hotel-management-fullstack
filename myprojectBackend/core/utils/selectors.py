@@ -1,6 +1,10 @@
+from ast import mod
 from typing import Type, Optional, List, Any
 from typing import Optional
 from django.db.models import Model
+
+from api.models import Guests
+from django.contrib.auth.hashers import check_password
 
 def get_model_data(
     hotel_id: int,
@@ -30,3 +34,23 @@ def get_model_data(
     # filter by id and get only specific fields
     # again use * to unpack fields_list
     return queryset.filter(id=id, hotel_id=hotel_id).values(*fields_list)
+
+
+def authenticate_guest(email, password):
+    if not email or not password:
+        print('not email')
+        return None
+
+    try:
+
+        guest = Guests.objects.get(email__iexact=email)
+        print("guest",guest,guest.password)
+    except Guests.DoesNotExist:
+        return None
+
+    passcheckresult=check_password(password, guest.password)
+    if passcheckresult:
+        print("pass",)
+        return guest
+    print("returning none",)
+    return None

@@ -1,3 +1,5 @@
+from numpy import get_printoptions
+
 from api.models import Bookings
 from ast import BoolOp
 import stat
@@ -208,25 +210,35 @@ def run():
     # if isinstance(list,allHotels):
     #     print('yes')
     # print(list(allHotels))
-    guestBookings = (
-        Bookings.objects.filter(hotel__id=1, guest__id=604)
-        .select_related("cabin")
-        .values(
-            "id",
-            "guest_id",
-            "startDate",
-            "endDate",
-            "numNights",
-            "totalPrice",
-            "numGuests",
-            "status",
-            "created_at",
-            "cabin__name",
-            "cabin__image",
-        )
-    )
-    # print(Guests.objects.filter(email="theftamen@gmail.com").values('id'))
+    # guestBookings = (
+    #     Bookings.objects.filter(hotel__id=1, guest__id=604)
+    #     .select_related("cabin")
+    #     .values(
+    #         "id",
+    #         "guest_id",
+    #         "startDate",
+    #         "endDate",
+    #         "numNights",
+    #         "totalPrice",
+    #         "numGuests",
+    #         "status",
+    #         "created_at",
+    #         "cabin__name",
+    #         "cabin__image",
+    #     )
+    # )
+    # # print(Guests.objects.filter(email="theftamen@gmail.com").values('id'))
 
-    # guest_bookings = Bookings.objects.filter(guest_id=604)
+    # # guest_bookings = Bookings.objects.filter(guest_id=604)
 
-    print("empty:-", list(guestBookings))
+    # print("empty:-", list(guestBookings))
+    # values_array = ["created_at", "fullName", "email", "hotel", "isOAuthUser"]
+    # data = Guests.objects.filter(email="rahulsharma@example.com").values(*values_array)
+    # print(list(data))
+    # Guests.objects.filter(email__in=["champ@gmail.com","rahulsharma@example.com"]).delete()
+    # print(
+    #     Guests.objects.filter(
+    #         email__in=["champ@gmail.com", "rahulsharma@example.com"]
+    #     ).exists()
+    # )
+    print(Guests.objects.filter(email="champ@gmail.com").exists())
