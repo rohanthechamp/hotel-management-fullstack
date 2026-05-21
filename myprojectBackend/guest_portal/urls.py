@@ -18,7 +18,7 @@ from .views import (
 )
 
 urlpatterns = [
-    # CABINS (PUBLIC)
+    # CABINS (PUBLICmyprojectBackend/guest_portal/views.py)
     path("cabins/", CustomerCabinListView.as_view()),
     path("cabins/<int:pk>/", CustomerSingleCabinView.as_view()),
     # BOOKINGS (GUEST)

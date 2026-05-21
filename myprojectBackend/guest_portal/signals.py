@@ -1,10 +1,9 @@
 from django.db.models.signals import post_save, post_delete, post_migrate
 from django.dispatch import receiver
 from django.core.cache import cache
-
 from api.models import Guests, Bookings
 
-CACHE_PATTERN = ["guest_bookings_version_"]
+
 
 
 # @receiver(post_save, sender=Guests)

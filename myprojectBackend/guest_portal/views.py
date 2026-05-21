@@ -585,9 +585,7 @@ class RefreshAccessTokenView(APIView):
 
             return Response({"detail": "Guest not found"}, status=404)
 
-        # tokens = getTokens(guest=guest)  #  manual token logic
-        # response_serializer = TokenResponseSerializer(data=tokens)
-        # response_serializer.is_valid(raise_exception=True)
+    
 
         accesstoken, refreshtoken = getTokens(guest=guest)
         token_data = {"accesstoken": accesstoken, "refreshtoken": refreshtoken}
