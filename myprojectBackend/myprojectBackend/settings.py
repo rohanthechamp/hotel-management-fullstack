@@ -98,6 +98,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:3001",
     "https://hotel-management-fullstack-ten.vercel.app",
+        "https://hote-customer-facing-website-1h9r43uf8-rohanthechamps-projects.vercel.app",
+
 ]
 
 # CORS_ALLOWED_ORIGIN_REGEXES = [
@@ -121,6 +123,8 @@ CSRF_TRUSTED_ORIGINS = [
     
     "https://hotel-management-fullstack-ten.vercel.app",
     "https://*.vercel.app",
+        "https://hote-customer-facing-website-1h9r43uf8-rohanthechamps-projects.vercel.app",
+
 ]
 # Password Validation
 AUTH_PASSWORD_VALIDATORS = [
