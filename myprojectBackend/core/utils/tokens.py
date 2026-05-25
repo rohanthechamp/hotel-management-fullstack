@@ -27,7 +27,6 @@ def generate_access_token(guest):
     )
 
 
-
 def generate_refresh_token(guest):
 
     payload = {
@@ -49,10 +48,10 @@ def getTokens(guest) -> tuple[str, str]:
 
     # Using variables as keys with None or empty string values
 
-    accesstoken = generate_access_token(guest)
-    refreshtoken = generate_refresh_token(guest)
+    accessToken = generate_access_token(guest)
+    refreshToken = generate_refresh_token(guest)
 
-    return (accesstoken, refreshtoken)
+    return (accessToken, refreshToken)
 
 
 def verify_token(token):

@@ -63,7 +63,7 @@ def get_current_hotel():
 
     cached_hotel_object = cache.get("hotel_key")
     if cached_hotel_object:
-        return  cached_hotel_object
+        return cached_hotel_object
     hotel_object = Hotel.objects.first()
     cache.set("hotel_key", hotel_object)
 
@@ -498,7 +498,7 @@ class GuestLoginView(APIView):
             )
 
         # Generate JWT session tokens manually
-        accesstoken, refreshtoken = getTokens(guest=guest)
+        accessToken, refreshToken = getTokens(guest=guest)
 
         return Response(
             {
@@ -509,8 +509,8 @@ class GuestLoginView(APIView):
                     "email": guest.email,
                 },
                 "tokens": {
-                    "accesstoken": accesstoken,
-                    "refreshtoken": refreshtoken,
+                    "accessToken": accessToken,
+                    "refreshToken": refreshToken,
                 },
             },
             status=status.HTTP_200_OK,
@@ -544,8 +544,11 @@ class GoogleOAuthJWTView(APIView):
             )
 
         # Generate app tokens directly for verified Google identity
-        accesstoken, refreshtoken = getTokens(guest=currentGuest)
-        token_data = {"accesstoken": accesstoken, "refreshtoken": refreshtoken}
+        accessToken, refreshToken = getTokens(guest=currentGuest)
+        token_data = {
+            "accessToken": accessToken,
+            "refreshToken": refreshToken,
+        }
 
         return Response(
             {"message": "Google auth successful!", "data": token_data},
@@ -559,16 +562,16 @@ class RefreshAccessTokenView(APIView):
 
     def post(self, request):
 
-        refreshtoken = request.data.get("refreshtoken")
+        refreshToken = request.data.get("refreshToken")
         logger.info(
-            f"refresh token from the request {request} and refreshtoken is {refreshtoken} "
+            f"refresh token from the request {request} and refreshToken is {refreshToken} "
         )
 
-        if not refreshtoken:
+        if not refreshToken:
 
             return Response({"detail": "Refresh token required"}, status=400)
 
-        payload = verify_token(refreshtoken)
+        payload = verify_token(refreshToken)
 
         if payload is None:
 
@@ -585,10 +588,11 @@ class RefreshAccessTokenView(APIView):
 
             return Response({"detail": "Guest not found"}, status=404)
 
-    
-
-        accesstoken, refreshtoken = getTokens(guest=guest)
-        token_data = {"accesstoken": accesstoken, "refreshtoken": refreshtoken}
+        accessToken, refreshToken = getTokens(guest=guest)
+        token_data = {
+            "accessToken": accessToken,
+            "refreshToken": refreshToken,
+        }
 
         return Response({"data": token_data}, status=status.HTTP_200_OK)
 
