@@ -51,11 +51,11 @@ def get_cached_data(cache_key, fetch_func, timeout=600):
     #     & Q(created_at__lte=tomorrow_start)
     #     & Q(status__in=["checked-in", "checked-out", "unconfirmed"])
     # )
-    # data = cache.get(cache_key)
+    data = cache.get(cache_key)
 
-    # if data is not None:
-    #     print("⚡ CACHE HIT AN")
-    #     return data
+    if data is not None:
+        print("⚡ CACHE HIT AN")
+        return data
 
     # Cache miss: Execute the database function
     data = fetch_func()
