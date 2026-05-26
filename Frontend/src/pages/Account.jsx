@@ -81,6 +81,7 @@ function Account() {
   const { auth } = useAuth();
   const isAdmin = auth?.userRole === "Admin";
   const { isLoading, HotelInvitesData, error } = useGetAllinvites();
+
   const { isLoading1, UserData, error1 } = useCurrentUser();
   return (
     <Page>

@@ -11,7 +11,8 @@ from django.db.models.functions import TruncDate
 import time
 from django.db import connection, reset_queries
 from api.models import Cabins
-from users.models import Hotel
+from users.models import Hotel, HotelInvite
+
 # from time import timezone
 from django.utils import timezone
 from warnings import filters
@@ -23,7 +24,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from api.filters import PaidBookings, RecentPaidBookings
 from api.pagination import CustomPagination
 from api.models import Cabins, Guests, Bookings, Settings
-from users.models import  Hotel
+from users.models import Hotel
 
 from django.core.cache import cache
 from rest_framework.views import APIView
@@ -241,4 +242,17 @@ def run():
     #         email__in=["champ@gmail.com", "rahulsharma@example.com"]
     #     ).exists()
     # )
-    print(Guests.objects.filter(email="champ@gmail.com").exists())
+    # print(Guests.objects.filter(email="champ@gmail.com").exists())
+    invite_data = (
+        HotelInvite.objects.filter(hotel__admin_id=1)
+        .distinct("email")
+        .values(
+            "email",
+            "is_used",
+            "expires_at",
+            "created_at",
+            # "is_expired",
+            # "status",
+        )[:1]
+    )
+    print(invite_data)

@@ -268,6 +268,10 @@
 import { useState } from "react";
 import styled from "styled-components";
 import { Search, Mail, CalendarDays, Clock3, Users, Clock, ThumbsUp } from "lucide-react";
+import { sendInvite } from "../../services/apiUser";
+import { getError } from "../../utils/helpers";
+import toast from "react-hot-toast";
+import Button from "../../ui/Button";
 
 // --- THEME & STYLES ---
 // Using a unified theme object for easier maintenance and perfect colors
@@ -516,6 +520,7 @@ const getInviteStatus = (invite) => {
 };
 
 const HotelInvites = ({ HotelInvitesData, isLoading, error }) => {
+  const [isSending, setIsSending] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   if (isLoading) return <Container><h1>Loading...</h1></Container>;
@@ -530,6 +535,21 @@ const HotelInvites = ({ HotelInvitesData, isLoading, error }) => {
   const total = filteredData?.length || 0;
   const pending = filteredData?.filter(i => getInviteStatus(i).label === 'Pending').length || 0;
   const joined = filteredData?.filter(i => getInviteStatus(i).label === 'Joined').length || 0;
+
+
+  const onSubmit = async (email) => {
+    try {
+      setIsSending(true);
+      const resData = await sendInvite(email);
+      console.log('sended invite', resData)
+      toast.success(resData.message || "Invite sent successfully");
+      setIsSending(false);
+    } catch (error) {
+      toast.error(getError(error, "Error while creating invite"));
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   return (
     <Container>
@@ -590,7 +610,7 @@ const HotelInvites = ({ HotelInvitesData, isLoading, error }) => {
           return (
             <InviteCard key={invite.id} color={status.color}>
               <CardTopRow>
-                <CardIconBox>
+                <CardIconBox> 
                   <Mail size={18} strokeWidth={2} />
                 </CardIconBox>
                 <StatusPill color={status.color}>
@@ -616,12 +636,19 @@ const HotelInvites = ({ HotelInvitesData, isLoading, error }) => {
               {!invite.is_used && (
                 <CardButton
                   // Using the pink from the gradient for the action buttons
+                  disabled={isSending}
                   primary={theme.accent.purpleEnd}
+                  onClick={() => onSubmit(invite.email)}
                 >
                   <Mail size={16} color="white" />
-                  Resend Invite
+
+                  {
+                    isSending ? 'Sending Invite' :'Send Invite'
+                  }
                 </CardButton>
               )}
+
+
             </InviteCard>
           );
         })}

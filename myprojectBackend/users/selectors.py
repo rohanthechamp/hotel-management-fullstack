@@ -17,7 +17,7 @@ def get_hotel_code(code):
 
 
 def get_hotel_invites(admin_id):
-    invite_data=HotelInvite.objects.filter(hotel__admin_id=admin_id)
+    invite_data = HotelInvite.objects.filter(hotel__admin_id=admin_id).distinct("email")
     serializer = HotelInviteSerializer(invite_data, many=True)
     invites = serializer.data
     return invites
